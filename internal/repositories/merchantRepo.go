@@ -1,6 +1,9 @@
 package repositories
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"gorm.io/gorm"
 )
@@ -12,11 +15,11 @@ type MerchantRepo interface {
 	GetMerchant(entities.Merchant) *entities.Merchant
 
 
-	// CreateUser(entities.User)(*entities.User, error)
-	// FindUserById(string)(*entities.User,error)
-	// FindUserByPhone(string)(*entities.User, error)
+	CreateUser(entities.User)(*entities.User, error)
+	FindUserById(string)(*entities.User,error)
+	FindUserByPhone(string)(*entities.User, error)
 	// UpdateUser(entities.Merchant) (*entities.User, error)
-	// FindAllUsers(from string, to string, all bool, page int, perpage int) (*entities.User,error)
+	FindAllUsers(from string, to string, all bool, page int, perpage int) (*entities.GetAllUsers,error)
 }
 
 type MerchantRepoImpl struct {
@@ -77,3 +80,84 @@ func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchan
 }
 
 
+func (db *MerchantRepoImpl) CreateUser(user entities.User) (*entities.User,error){
+
+	err:= db.Db.Create(&user).Error
+	if err!=nil{
+		return nil,err
+	}
+
+	foundUser, err:= db.FindUserByPhone(user.PhoneNumber)
+
+	if err!=nil{
+		return nil,err
+	}
+	return foundUser,nil
+
+}
+
+
+func (db *MerchantRepoImpl) FindUserByPhone (phone string) (*entities.User, error){
+	user :=entities.User{}
+
+	err:= db.Db.Where("phone_number=?",phone).Take(&user).Error
+	if err!=nil{
+		return nil,err
+	}
+	return &user,nil
+
+}
+
+func (db *MerchantRepoImpl) FindUserById(id string) (*entities.User, error){
+	user:= entities.User{}
+	err:=db.Db.Where("id=?",id).Take(&user).Error
+	if err!=nil{
+		return nil,err
+	}
+	return &user,nil
+}
+
+func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error){
+
+	var users []entities.User
+	var totalPage int64
+	var prev int64
+	var next int64
+
+	if page<=1{
+		prev=0
+	}else{
+
+		prev= page-1
+	}
+	next = page+1
+
+	sql:= "SELECT * FROM users"
+
+	db.Db.Model(entities.User{}).Count(&totalPage)
+
+	if all{
+		db.Db.Model(entities.User{}).Order("created_at DESC").Find(&users)
+		return &users, nil
+	}
+	
+	if from!="" && to!="" {
+		sql= fmt.Sprintf("SELECT * FROM users WHERE created_at BETWEEN %s AND %s ", from,to)
+		countTotal:= fmt.Sprintf("SELECT COUNT(*) FROM users WHERE created_at BETWEEN %s AND %s ", from,to)
+		db.Db.Raw(countTotal).Scan(&totalPage)
+	}
+	
+	lastPage := int64(math.Ceil(float64(totalPage/perpage)))
+	if page == lastPage{
+		next=0
+	}
+	return &entities.GetAllUsers{
+		Users:users,
+		Total:totalPage,
+		PerPage:perpage,
+		Prev:prev,
+		Next:next,
+		LastPage:lastPage,
+	},nil
+
+}

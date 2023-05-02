@@ -7,7 +7,6 @@ import (
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"github.com/santimpay/customer-loyality/internal/service"
 	"github.com/santimpay/customer-loyality/internal/util"
-
 )
 
 func Login(srv service.MerchantService) echo.HandlerFunc{
@@ -35,4 +34,5 @@ func Login(srv service.MerchantService) echo.HandlerFunc{
 		return nil
 	}
 }
+
 
