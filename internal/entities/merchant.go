@@ -8,7 +8,7 @@ type Merchant struct {
 	PhoneNumber  	string  	` validate:" required "  json:"phonenumber" `
 	Token 			string       `json:"token"`
 	BusinessName 	string  	` validate:" required , max=30"  json:"businessname" `
-	// Users			[]*User			`gorm:"many2many:merchant_users;"`
+	Users			[]*User			`gorm:"many2many:merchant_users;"`
 }
 
 
@@ -24,7 +24,7 @@ type MerchantLogin struct {
 type GetAllUsers struct{
 	Users   		[]User
 	Total   		int64
-	PerPage			int64
+	Page			int64
 	Prev 			int64
 	Next			int64
 	LastPage 		int64
