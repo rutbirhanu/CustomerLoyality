@@ -44,6 +44,40 @@ func GenerateToken(phone string, uid string, name string) (string, error) {
 	},
  }
 
+
+
+
+//  privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+// 	if err != nil {
+// 	    return "", err
+// 	}
+
+// 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+// 	tokenString, err := token.SignedString(privateKey)
+// 	if err != nil {
+// 	    return "", err
+// 	}
+
+// 	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
+// 	if err != nil {
+// 	    return nil, err
+// 	}
+
+// 	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+// 	    return publicKey, nil
+// 	})
+
+// 	if err != nil {
+// 	    return nil, err
+// 	}
+
+// 	claims, ok := token.Claims.(jwt.MapClaims)
+	
+
+
+
+
+
  token, err:=jwt.NewWithClaims( jwt.SigningMethodHS256, tokenClaim).SignedString([]byte("hello"))
  if err!=nil{
 	return "", err

@@ -8,6 +8,8 @@ type Merchant struct {
 	PhoneNumber  	string  	` validate:" required "  json:"phonenumber" `
 	Token 			string       `json:"token"`
 	BusinessName 	string  	` validate:" required , max=30"  json:"businessname" `
+	PrivateKey		string
+	PublicKey		string
 	Users			[]*User			`gorm:"many2many:merchant_users;"`
 }
 

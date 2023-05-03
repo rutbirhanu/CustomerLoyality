@@ -6,12 +6,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"github.com/santimpay/customer-loyality/internal/service"
-
-	// "github.com/santimpay/customer-loyality/internal/service"
+	"github.com/santimpay/customer-loyality/internal/repositories"
 	"github.com/santimpay/customer-loyality/internal/util"
 )
 
-func Signup(srvc service.MerchantService) echo.HandlerFunc {
+func Signup(srvc service.MerchantService, repo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := entities.Merchant{}
 		err := c.Bind(&user)
@@ -24,12 +23,19 @@ func Signup(srvc service.MerchantService) echo.HandlerFunc {
 
 		}
 		hashedPass := util.HashPassword(user.Password)
+		privateKey,publicKey, err := repo.GenerateKeyPair()
+		
+		if err != nil {
+			return err
+		}
 
 		userData := entities.Merchant{
 			MerchantName: user.MerchantName,
 			Password:     hashedPass,
 			PhoneNumber:  user.PhoneNumber,
 			BusinessName: user.BusinessName,
+			PrivateKey: privateKey,
+			PublicKey: publicKey,
 		}
 		data, stored := srvc.CreateMerchant(userData)
 		if !stored {

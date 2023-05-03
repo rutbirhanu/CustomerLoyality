@@ -16,8 +16,8 @@ type MerchantRepo interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, error)
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
-	GetMerchant(entities.Merchant) *entities.Merchant
-	GenerateKeyPair()(string,string,error)
+	// GetMerchant(entities.Merchant) *entities.Merchant
+	GenerateKeyPair() (string, string, error)
 
 	CreateUser(entities.User) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
@@ -36,21 +36,21 @@ func NewMerchantRepo(db *gorm.DB) MerchantRepo {
 	}
 }
 
-func (db MerchantRepoImpl) GetMerchant(merchant entities.Merchant) *entities.Merchant {
-	return &entities.Merchant{
-		PhoneNumber:  merchant.PhoneNumber,
-		Password:     merchant.Password,
-		MerchantName: merchant.MerchantName,
-		BusinessName: merchant.BusinessName,
-	}
+// func (db MerchantRepoImpl) GetMerchant(merchant entities.Merchant) *entities.Merchant {
+// 	return &entities.Merchant{
+// 		PhoneNumber:  merchant.PhoneNumber,
+// 		Password:     merchant.Password,
+// 		MerchantName: merchant.MerchantName,
+// 		BusinessName: merchant.BusinessName,
+// 	}
 
-}
+// }
 
-func (db *MerchantRepoImpl) GenerateKeyPair() (string,string,error){
+func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return "","", err
+		return "", "", err
 	}
 
 	privateKeyBytes := pem.EncodeToMemory(&pem.Block{
@@ -60,7 +60,7 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string,string,error){
 
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return "",string(privateKeyBytes), err
+		return "", string(privateKeyBytes), err
 	}
 
 	publicKeyBytes = pem.EncodeToMemory(&pem.Block{
@@ -68,35 +68,7 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string,string,error){
 		Bytes: publicKeyBytes,
 	})
 
-
-	return string(privateKeyBytes),string(publicKeyBytes), nil
-
-	// privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
-	// if err != nil {
-	//     return "", err
-	// }
-
-	// token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	// tokenString, err := token.SignedString(privateKey)
-	// if err != nil {
-	//     return "", err
-	// }
-
-	// publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
-	// if err != nil {
-	//     return nil, err
-	// }
-
-	// token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-	//     return publicKey, nil
-	// })
-
-	// if err != nil {
-	//     return nil, err
-	// }
-
-	// claims, ok := token.Claims.(jwt.MapClaims)
-	// if !ok || !token.Valid {
+	return string(privateKeyBytes), string(publicKeyBytes), nil
 
 }
 
@@ -110,8 +82,8 @@ func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entitie
 		return nil, err
 	}
 
-	regMerchant := db.GetMerchant(*storedMerchant)
-	return regMerchant, nil
+	// regMerchant := db.GetMerchant(*storedMerchant)
+	return storedMerchant, nil
 
 }
 

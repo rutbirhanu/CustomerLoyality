@@ -40,8 +40,8 @@ func main() {
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
 	app := echo.New()
-	app.POST("/signup", auth.Signup(merchantSrvc))
-	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
+	app.POST("/signup", auth.Signup(merchantSrvc , merchantRepo))
+	app.POST("/login", auth.Login(merchantSrvc))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 
