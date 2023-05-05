@@ -30,7 +30,6 @@ func NewUserRepo (db *gorm.DB, MerchantRepo MerchantRepo) UserRepo{
 
 
 func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
-
 	err := db.Db.Create(&user).Error
 	if err != nil {
 		return nil, err
@@ -41,6 +40,11 @@ func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*enti
 	if err != nil {
 		return nil, err
 	}
+	err=db.AddMerchant(merchantId,user.ID)
+	if err != nil {
+		return nil, err
+	}
+	
 	return foundUser, nil
 
 }

@@ -35,8 +35,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	merchantRepo := repositories.NewMerchantRepo(db)
+	var merchantRepo repositories.MerchantRepo
+	
+	userRepo := repositories.NewUserRepo(db, merchantRepo)
+	merchantRepo = repositories.NewMerchantRepo(db,userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
 	app := echo.New()
