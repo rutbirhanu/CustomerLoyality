@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/configs"
 	"github.com/santimpay/customer-loyality/internal/db_utils"
 
-	// "github.com/santimpay/customer-loyality/internal/entities"
+	"github.com/santimpay/customer-loyality/internal/handlers"
 	"github.com/santimpay/customer-loyality/internal/handlers/auth"
 	"github.com/santimpay/customer-loyality/internal/repositories"
 	"github.com/santimpay/customer-loyality/internal/service"
@@ -35,15 +34,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var merchantRepo repositories.MerchantRepo
-	
-	userRepo := repositories.NewUserRepo(db, merchantRepo)
-	merchantRepo = repositories.NewMerchantRepo(db,userRepo)
+	var userRepo repositories.UserRepo
+	merchantRepo := repositories.NewMerchantRepo(db,userRepo)
+	userRepo = repositories.NewUserRepo(db, merchantRepo)
+	userSrvc:=service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
 	app := echo.New()
 	app.POST("/signup", auth.Signup(merchantSrvc , merchantRepo))
 	app.POST("/login", auth.Login(merchantSrvc,merchantRepo))
+	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 
