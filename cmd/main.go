@@ -41,7 +41,7 @@ func main() {
 
 	app := echo.New()
 	app.POST("/signup", auth.Signup(merchantSrvc , merchantRepo))
-	app.POST("/login", auth.Login(merchantSrvc))
+	app.POST("/login", auth.Login(merchantSrvc,merchantRepo))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 

@@ -21,6 +21,7 @@ type MerchantServiceImpl struct{
 func NewMerchantSrvc(repo repositories.MerchantRepo) MerchantService{
 	return &MerchantServiceImpl{
 		merchantRepo:repo ,
+		
 	}
 }
 

@@ -34,7 +34,7 @@ func VerifyPassword(userPass string, providedPass string) bool {
 
 }
 
-func GenerateToken(phone string, uid string, name string) (string, error) {
+func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte) (string, error) {
  tokenClaim:= & ClaimData{
 	PhoneNumber: phone,
 	UserId: uid,
@@ -44,13 +44,10 @@ func GenerateToken(phone string, uid string, name string) (string, error) {
 	},
  }
 
-
-
-
-//  privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
-// 	if err != nil {
-// 	    return "", err
-// 	}
+ privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	if err != nil {
+	    return "", err
+	}
 
 // 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 // 	tokenString, err := token.SignedString(privateKey)
@@ -75,10 +72,7 @@ func GenerateToken(phone string, uid string, name string) (string, error) {
 	
 
 
-
-
-
- token, err:=jwt.NewWithClaims( jwt.SigningMethodHS256, tokenClaim).SignedString([]byte("hello"))
+ token, err:=jwt.NewWithClaims( jwt.SigningMethodRS256, tokenClaim).SignedString(privateKey)
  if err!=nil{
 	return "", err
  }
