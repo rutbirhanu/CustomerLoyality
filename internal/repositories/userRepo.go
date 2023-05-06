@@ -12,18 +12,18 @@ type UserRepo interface {
 	CreateUser(entities.User, string) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
-	AddMerchant(merchantId string,userId string)(*entities.Merchant,error)
+	AddMerchant(merchantId string, userId string) (*entities.Merchant, error)
 }
 
 type UserRepoImpl struct {
-	Db          		 *gorm.DB
-	merchantRepo 			MerchantRepo
+	Db           *gorm.DB
+	merchantRepo MerchantRepo
 }
 
-func NewUserRepo(db   *gorm.DB, MerchantRepo   MerchantRepo) UserRepo {
+func NewUserRepo(db *gorm.DB, merchantRepo MerchantRepo) UserRepo {
 	return &UserRepoImpl{
 		Db:           db,
-		merchantRepo: MerchantRepo,
+		merchantRepo: merchantRepo,
 	}
 }
 
@@ -71,19 +71,19 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 
 	user, err := db.FindUserById(userId)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	if err := db.Db.Model(&user).Association("Merchants").Append(merchant); err != nil {
-		return nil,err
+		return nil, err
 	}
-	return merchant,nil
+	return merchant, nil
 }
