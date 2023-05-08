@@ -9,10 +9,12 @@ type UserRepo interface {
 	// BuyAirtime()
 	// Donate()
 	// TransferCash()
-	CreateUser(entities.User, string) (*entities.User, error)
+	CreateUser(entities.User) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
 	AddMerchant(merchantId string, userId string) (*entities.Merchant, error)
+	UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
+	UpdateUser(user entities.User)(error)
 }
 
 type UserRepoImpl struct {
@@ -27,7 +29,7 @@ func NewUserRepo(db *gorm.DB, merchantRepo MerchantRepo) UserRepo {
 	}
 }
 
-func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
+func (db *UserRepoImpl) CreateUser(user entities.User) (*entities.User, error) {
 	err := db.Db.Create(&user).Error
 	if err != nil {
 		return nil, err
@@ -47,11 +49,11 @@ func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*enti
 
 }
 
-
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{}
 
 	err := db.Db.Where("phone_number=?", phone).Preload("Merchants").Take(&user).Error
+	// err := db.Db.Where("phone_number=?", phone).Take(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -87,4 +89,29 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 		return nil, err
 	}
 	return merchant, nil
+}
+
+func (db *UserRepoImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error) {
+	data, err := db.FindUserByPhone(user.PhoneNumber)
+	if err != nil {
+		return nil, err
+	}
+	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, err
+	}
+
+	_ , err = db.AddMerchant(merchant.ID, data.ID)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (db *UserRepoImpl) UpdateUser(user entities.User)(error){
+	err := db.Db.Save(&user).Error
+	if err!=nil{
+		return err
+	}
+	return nil
 }

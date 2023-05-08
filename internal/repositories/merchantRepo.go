@@ -18,7 +18,7 @@ type MerchantRepo interface {
 	FindMerchantByPhone(string) (*entities.Merchant, error)
 	// GetMerchant(entities.Merchant) *entities.Merchant
 	GenerateKeyPair() (string, string, error)
-	// UpdateUser(entities.Merchant) (*entities.User, error)
+	UpdateMerchant(entities.Merchant) (error)
 	GetAllMerchants()(*[]entities.Merchant,error)
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 }
@@ -187,4 +187,13 @@ func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page 
 		LastPage: int64(lastPage),
 	}, nil
 
+}
+
+
+func (db *MerchantRepoImpl) UpdateMerchant(merchant entities.Merchant)(error){
+	err := db.Db.Save(&merchant).Error
+	if err!=nil{
+		return err
+	}
+	return nil
 }

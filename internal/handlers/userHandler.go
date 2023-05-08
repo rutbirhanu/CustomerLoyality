@@ -21,36 +21,52 @@ func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo
 			return c.JSON(http.StatusBadRequest, "merchant ID is not provided")
 		}
 
-		userData, created := userSrvc.CreateUser(user, merchantID)
+		userData, created := userSrvc.CreateUser(user)
 		if !created {
 			return c.JSON(http.StatusBadRequest, "can not create user")
 		}
 
-		merch,err := repo.AddMerchant(merchantID,user.ID)
+		merch, err := repo.AddMerchant(merchantID, user.ID)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
 		c.JSON(http.StatusCreated, userData)
-		c.JSON(http.StatusCreated,merch)
+		c.JSON(http.StatusCreated, merch)
 		return nil
 
 	}
 }
 
+func AddMerchant(srvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := entities.User{}
+		merchantId := c.Param("merchantid")
+		err := c.Bind(&user)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		data, err := repo.AddMerchant(merchantId, user.ID)
+		if err != nil {
+			return c.JSON(http.StatusNotFound, err)
+		}
+		c.JSON(http.StatusAccepted, data)
+		return nil
+	}
+}
 
-func AddMerchant(srvc service.UserService, repo repositories.UserRepo)echo.HandlerFunc{
-	return func(c echo.Context) error{
-		user:=entities.User{}
-		merchantId:=c.Param("merchantid")
-		err:=c.Bind(&user)
-		if err!=nil{
-			return c.JSON(http.StatusBadRequest,err)
+func Login(srvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := entities.UserLogin{}
+		merchantId := c.Param("merchantid")
+		err := c.Bind(&user)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
 		}
-		data,err:=repo.AddMerchant(merchantId,user.ID)
-		if err!=nil{
-			return c.JSON(http.StatusNotFound,err)
+		merchant, err := repo.UserLogin(user, merchantId)
+		if err != nil {
+			return c.JSON(http.StatusNotFound, err)
 		}
-		c.JSON(http.StatusAccepted,data)
+		c.JSON(http.StatusAccepted, merchant)
 		return nil
 	}
 }

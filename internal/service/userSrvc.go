@@ -6,10 +6,11 @@ import (
 )
 
 type UserService interface {
-	CreateUser(entities.User, string) (*entities.User, bool)
+	CreateUser(entities.User) (*entities.User, bool)
 	FindUserById(string) (*entities.User, bool)
 	FindUserByPhone(string) (*entities.User, bool)
 	AddMerchant(string,string)(*entities.Merchant,bool)
+	UserLogin(entities.UserLogin,string)(*entities.User,bool)
 }
 
 type UserSrvcImpl struct {
@@ -23,8 +24,8 @@ func NewUserSrvc (userRepo repositories.UserRepo) UserService{
 	}
 }
 
-func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User, merchantId string) (*entities.User, bool){
-	User, err := userSrvc.UserRepo.CreateUser(user,merchantId)
+func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User) (*entities.User, bool){
+	User, err := userSrvc.UserRepo.CreateUser(user)
 	if err!= nil{
 		return nil,false
 	}
@@ -58,4 +59,13 @@ func (userSrvc *UserSrvcImpl) AddMerchant(merchantId string, userId string) (*en
 		return nil,false
 	}
 	return data,true
+}
+
+func (userSrvc *UserSrvcImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User,bool){
+	merchant,err :=userSrvc.UserRepo.UserLogin(user,merchantId)
+
+	if err!=nil{
+		return nil,false
+	}
+	return merchant,true
 }

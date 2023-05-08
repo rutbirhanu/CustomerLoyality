@@ -9,6 +9,12 @@ type User struct{
 }
 
 
+type UserLogin struct {
+
+	PhoneNumber		string 	    `json:"phonenumber"`
+	
+}
+
 // type MerchantUser struct{
 // 	MerchantID		string	
 // 	UserID			string
