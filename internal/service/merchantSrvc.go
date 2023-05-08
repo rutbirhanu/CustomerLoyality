@@ -10,6 +10,7 @@ type MerchantService interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, bool)
 	FindMerchantById(string) (*entities.Merchant, bool)
 	FindMerchantByPhone(string) (*entities.Merchant, bool)
+	GetAllMerchants()(*[]entities.Merchant,bool)
 	
 }
 
@@ -50,3 +51,12 @@ func (srvc MerchantServiceImpl) FindMerchantByPhone (phone string) (*entities.Me
 	}
 	return merchant,true
 }
+
+func (srvc MerchantServiceImpl) GetAllMerchants()(*[]entities.Merchant,bool){
+	data,err:=srvc.merchantRepo.GetAllMerchants()
+	if err!=nil{
+		return nil,false
+	}
+	return data, true
+}
+

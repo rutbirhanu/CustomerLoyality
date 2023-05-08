@@ -47,6 +47,7 @@ func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*enti
 
 }
 
+
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{}
 

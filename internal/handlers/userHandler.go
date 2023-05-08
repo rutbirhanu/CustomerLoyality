@@ -36,3 +36,21 @@ func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo
 
 	}
 }
+
+
+func AddMerchant(srvc service.UserService, repo repositories.UserRepo)echo.HandlerFunc{
+	return func(c echo.Context) error{
+		user:=entities.User{}
+		merchantId:=c.Param("merchantid")
+		err:=c.Bind(&user)
+		if err!=nil{
+			return c.JSON(http.StatusBadRequest,err)
+		}
+		data,err:=repo.AddMerchant(merchantId,user.ID)
+		if err!=nil{
+			return c.JSON(http.StatusNotFound,err)
+		}
+		c.JSON(http.StatusAccepted,data)
+		return nil
+	}
+}

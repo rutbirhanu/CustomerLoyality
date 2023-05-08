@@ -19,6 +19,7 @@ type MerchantRepo interface {
 	// GetMerchant(entities.Merchant) *entities.Merchant
 	GenerateKeyPair() (string, string, error)
 	// UpdateUser(entities.Merchant) (*entities.User, error)
+	GetAllMerchants()(*[]entities.Merchant,error)
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 }
 
@@ -83,6 +84,16 @@ func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entitie
 	return storedMerchant, nil
 
 }
+
+func (db *MerchantRepoImpl) GetAllMerchants()(*[]entities.Merchant,error){
+	allMerchats:=[]entities.Merchant{}
+	err:=db.Db.Find(&allMerchats).Error
+	if err!=nil{
+		return nil,err
+	}
+	return &allMerchats,nil
+}
+
 
 func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, error) {
 	var merchant entities.Merchant
