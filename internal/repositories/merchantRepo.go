@@ -16,22 +16,24 @@ type MerchantRepo interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, error)
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
+	RetrivePublicKey(merchantId string)(string,error)
 	// GetMerchant(entities.Merchant) *entities.Merchant
 	GenerateKeyPair() (string, string, error)
-	UpdateMerchant(entities.Merchant) (error)
-	GetAllMerchants()(*[]entities.Merchant,error)
+	UpdateMerchant(entities.Merchant) error
+	GetAllMerchants() (*[]entities.Merchant, error)
+	DeleteAll() error
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 }
 
 type MerchantRepoImpl struct {
-	Db 				*gorm.DB
-	userRepo		 UserRepo
+	Db *gorm.DB
+	// userRepo UserRepo
 }
 
-func NewMerchantRepo(db *gorm.DB, UserRepo UserRepo) MerchantRepo {
+func NewMerchantRepo(db *gorm.DB) MerchantRepo {
 	return &MerchantRepoImpl{
 		Db: db,
-		userRepo: UserRepo,
+		// userRepo: UserRepo,
 	}
 }
 
@@ -85,20 +87,20 @@ func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entitie
 
 }
 
-func (db *MerchantRepoImpl) GetAllMerchants()(*[]entities.Merchant,error){
-	allMerchats:=[]entities.Merchant{}
-	err:=db.Db.Find(&allMerchats).Error
-	if err!=nil{
-		return nil,err
+func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
+	allMerchats := []entities.Merchant{}
+	err := db.Db.Preload("Users").Find(&allMerchats).Error
+	if err != nil {
+		return nil, err
 	}
-	return &allMerchats,nil
+	return &allMerchats, nil
 }
-
 
 func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, error) {
 	var merchant entities.Merchant
 
-	err := db.Db.Where("id=?", id).Take(&merchant).Error
+	err := db.Db.Find(&merchant, "id=?", id).Error
+
 
 	if err != nil {
 		return nil, err
@@ -117,26 +119,33 @@ func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchan
 
 }
 
-
-func (db *MerchantRepoImpl) AddUser(userId string, merchantId string) error {
-	merchant, err := db.FindMerchantById(merchantId)
-	if err != nil {
-		return err
+func (db MerchantRepoImpl) RetrivePublicKey(phone string)(string,error){
+	merchant,err:= db.FindMerchantByPhone(phone)
+	if err!=nil{
+		return "",err
 	}
-	user,err:= db.userRepo.FindUserById(userId)
-
-	if err != nil {
-		return err
-	}
-	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
-		return err
-	}
-	if err := db.Db.Model(&user).Association("Users").Append(merchant); err != nil {
-		return err
-	}
-	return nil
+	publicKey := merchant.PublicKey
+	return publicKey, nil
 }
 
+// func (db *MerchantRepoImpl) AddUser(userId string, merchantId string) error {
+// 	merchant, err := db.FindMerchantById(merchantId)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	user, err := db.userRepo.FindUserById(userId)
+
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
+// 		return err
+// 	}
+// 	if err := db.Db.Model(&user).Association("Users").Append(merchant); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {
 
@@ -189,10 +198,18 @@ func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page 
 
 }
 
-
-func (db *MerchantRepoImpl) UpdateMerchant(merchant entities.Merchant)(error){
+func (db *MerchantRepoImpl) UpdateMerchant(merchant entities.Merchant) error {
 	err := db.Db.Save(&merchant).Error
-	if err!=nil{
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *MerchantRepoImpl) DeleteAll() error {
+	// err := db.Db.Delete(&entities.Merchant{}).Error
+	err := db.Db.Unscoped().Delete(&entities.Merchant{}).Error
+	if err != nil {
 		return err
 	}
 	return nil

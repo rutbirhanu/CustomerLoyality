@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/configs"
@@ -34,19 +35,24 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var userRepo repositories.UserRepo
-	merchantRepo := repositories.NewMerchantRepo(db,userRepo)
-	userRepo = repositories.NewUserRepo(db, merchantRepo)
-	userSrvc:=service.NewUserSrvc(userRepo)
+	// var merchantRepo repositories.MerchantRepo
+	merchantRepo := repositories.NewMerchantRepo(db)
+	userRepo := repositories.NewUserRepo(db, merchantRepo)
+	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
+	userMerchant := repositories.NewUserMerchantRepo(db, merchantRepo, userRepo)
 
 	app := echo.New()
 	app.GET("/allMerchant", handlers.GetAll(merchantSrvc))
+	app.GET("/getUser/:userid", handlers.GetUserById(userSrvc))
+
 	app.GET("/getMerchant/:merchantid", handlers.FindMerchantById(merchantSrvc))
-	app.POST("/addMerchant/:merchantid",handlers.Login(userSrvc,userRepo))
-	app.POST("/signup", auth.Signup(merchantSrvc , merchantRepo))
-	app.POST("/login", auth.Login(merchantSrvc,merchantRepo))
-	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
+	app.POST("/addMerchant/:merchantid", handlers.Login(userRepo, userSrvc, merchantRepo))
+	app.POST("/join", handlers.JoinTable(userMerchant))
+	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
+	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
+	app.POST("/createUser", handlers.RegisterUser(userSrvc, userRepo))
+	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 

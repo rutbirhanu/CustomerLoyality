@@ -2,10 +2,11 @@ package entities
 
 type User struct{
 	Model
-	PhoneNumber		string		`json:"phonenumber" validate:"required, max=30, min=6"`
-	UserName		string		`json:"username" validate:"required, max=30, min=6"`
-	// Amount 			string		`json:"amount"`
+	PhoneNumber		string		`json:"phonenumber" validate:"required"`
+	UserName		string		`json:"username" validate:"required"`
 	Merchants		[]*Merchant		`gorm:"many2many:merchant_users;"`
+	// Balance 		float64 		`json:"balance"`
+	// Transaction 	Transaction			`gorm:"foreignkey:transaction.ID"`
 }
 
 
@@ -13,6 +14,15 @@ type UserLogin struct {
 
 	PhoneNumber		string 	    `json:"phonenumber"`
 	
+}
+
+
+type Transaction struct{
+	Model
+	Amount 		float64 	`json:"amount"`
+	Type 		string		`json:"type"`
+	Action	 	string		`json:"action"`
+
 }
 
 // type MerchantUser struct{

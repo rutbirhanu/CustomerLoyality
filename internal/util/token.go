@@ -70,8 +70,6 @@ func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte
 
 // 	claims, ok := token.Claims.(jwt.MapClaims)
 	
-
-
  token, err:=jwt.NewWithClaims( jwt.SigningMethodRS256, tokenClaim).SignedString(privateKey)
  if err!=nil{
 	return "", err

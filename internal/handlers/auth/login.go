@@ -34,6 +34,16 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		}
 		user.Token = token
 		data.Token = token
+
+		cookie:= &http.Cookie{
+			Name: "auth-token",
+			Value: token,
+		}
+		cookie.SameSite=http.SameSiteLaxMode
+		cookie.HttpOnly=true
+		c.SetCookie(cookie)
+
+		
 		// c.JSON(http.StatusAccepted, privateKey)
 		c.JSON(http.StatusAccepted,data)
 		return nil

@@ -12,9 +12,10 @@ type UserRepo interface {
 	CreateUser(entities.User) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
-	AddMerchant(merchantId string, userId string) (*entities.Merchant, error)
+	AddMerchant(string, entities.User) (*entities.Merchant, *entities.User, error)
 	UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
-	UpdateUser(user entities.User)(error)
+	UpdateUser(user *entities.User) error
+	// DeleteAll()(error)
 }
 
 type UserRepoImpl struct {
@@ -22,37 +23,28 @@ type UserRepoImpl struct {
 	merchantRepo MerchantRepo
 }
 
-func NewUserRepo(db *gorm.DB, merchantRepo MerchantRepo) UserRepo {
+func NewUserRepo(db *gorm.DB, merchRepo MerchantRepo) UserRepo {
 	return &UserRepoImpl{
 		Db:           db,
-		merchantRepo: merchantRepo,
+		merchantRepo: merchRepo,
 	}
 }
 
 func (db *UserRepoImpl) CreateUser(user entities.User) (*entities.User, error) {
+	
 	err := db.Db.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
 
-	foundUser, err := db.FindUserByPhone(user.PhoneNumber)
-
-	if err != nil {
-		return nil, err
-	}
-	// err = db.AddMerchant(merchantId, user.ID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	return foundUser, nil
+	return &user, nil
 
 }
 
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{}
 
-	err := db.Db.Where("phone_number=?", phone).Preload("Merchants").Take(&user).Error
+	err := db.Db.Where("phone_number=?", phone).Take(&user).Error
 	// err := db.Db.Where("phone_number=?", phone).Take(&user).Error
 	if err != nil {
 		return nil, err
@@ -63,36 +55,34 @@ func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 
 func (db *UserRepoImpl) FindUserById(id string) (*entities.User, error) {
 	user := entities.User{}
-	err := db.Db.Where("id=?", id).Take(&user).Error
+	err := db.Db.First(&user, "id=?", id).Error
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
 
-func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, error) {
+// func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
 
-	user, err := db.FindUserById(userId)
-	if err != nil {
-		return nil, err
-	}
-	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
-	if err != nil {
-		return nil, err
-	}
+// 	user, err := db.FindUserById(userId)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
-		return nil, err
-	}
+// 	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
 
-	if err := db.Db.Model(&user).Association("Merchants").Append(merchant); err != nil {
-		return nil, err
-	}
-	return merchant, nil
-}
+// 	if err := db.Db.Model(&user).Association("Users").Append(&merchant); err != nil {
+// 		return nil, nil, err
+// 	}
+	
+// 	return merchant, user, nil
+// }
 
 func (db *UserRepoImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error) {
-	data, err := db.FindUserByPhone(user.PhoneNumber)
+	User, err := db.FindUserByPhone(user.PhoneNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -101,17 +91,58 @@ func (db *UserRepoImpl) UserLogin(user entities.UserLogin, merchantId string) (*
 		return nil, err
 	}
 
-	_ , err = db.AddMerchant(merchant.ID, data.ID)
+	// err = db.AddMerchant(merchantId, User.ID)
+	// if err := db.Db.Model(&User).Association("Merchants").Append(&merchant); err != nil {
+	// 	return nil,err
+	// }
+	// if err := db.Db.Model(&merchant).Association("Merchants").Append(&User); err != nil {
+	// 	return nil,err
+	// }
+	// merchant.Users=append(merchant.Users, User)
+	User.Merchants = append(User.Merchants, merchant)
+	// if err := db.Db.Model(&User).Association("Merchants").Append(&merchant); err != nil {
+	// 	return nil, err
+	// }
+	// err = db.Db.Model(&entities.User{}).Where("phone_number=?", user.PhoneNumber).Updates(&User).Error
+	// db.Db.Save(&User)
+
+	err = db.UpdateUser(User)
+
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	// err = db.Db.Save(&User).Error
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// merchant.Users=append(merchant.Users, User)
+
+	return User, nil
 }
 
-func (db *UserRepoImpl) UpdateUser(user entities.User)(error){
+func (db *UserRepoImpl) UpdateUser(user *entities.User) error {
 	err := db.Db.Save(&user).Error
-	if err!=nil{
+	if err != nil {
 		return err
 	}
 	return nil
+}
+
+
+func (db *UserRepoImpl) AddMerchant(merchantId string, user entities.User) (*entities.Merchant, *entities.User, error) {
+
+	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, nil, err
+	}
+	// user, err:= db.FindUserById(userId)
+	// if err != nil {
+	// 	return nil, nil, err
+	// }
+	merchant.Users = append(merchant.Users, &user)
+	// user.Merchants=append(user.Merchants, merchant)
+	db.Db.Save(&merchant)
+
+	return merchant, &user, nil
 }
