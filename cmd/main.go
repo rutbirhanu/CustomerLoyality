@@ -49,7 +49,7 @@ func main() {
 	app.POST("/addMerchant/:merchantid", handlers.Login(userRepo, userSrvc, merchantRepo))
 	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
 	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
-	app.POST("/createUser", handlers.RegisterUser(userSrvc, userRepo))
+	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
 	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))

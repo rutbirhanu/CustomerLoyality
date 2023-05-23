@@ -13,13 +13,16 @@ import (
 func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := entities.User{}
+		merchantId:=c.Param("merchantid")
 		err := c.Bind(&user)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
 
 		registered, _ := userSrvc.FindUserByPhone(user.PhoneNumber)
-		if registered != nil {
+		// for 
+		// registered.Merchants
+		if registered != nil  {
 			return c.JSON(http.StatusBadRequest, "already created phone")
 
 		}
@@ -27,9 +30,9 @@ func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo
 		// 	return c.JSON(http.StatusBadRequest, "not found")
 		// }
 
-		userData, created := userSrvc.CreateUser(user)
-		if !created {
-			return c.JSON(http.StatusBadRequest, "can not create user")
+		userData,err := repo.CreateUser(user, merchantId)
+		if err!=nil {
+			return c.JSON(http.StatusBadRequest,err)
 		}
 
 		c.JSON(http.StatusCreated, userData)

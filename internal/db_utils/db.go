@@ -19,6 +19,7 @@ func Connect(config *configs.DbConfig) (*gorm.DB, error) {
 	}
 	if err = db.AutoMigrate(&entities.Merchant{},
 		&entities.User{},
+		&entities.MerchantUsers{},
 		
 	); err != nil {
 		return nil, err

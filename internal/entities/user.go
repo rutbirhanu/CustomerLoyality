@@ -5,7 +5,7 @@ type User struct{
 	PhoneNumber		string		`json:"phonenumber" validate:"required"`
 	UserName		string		`json:"username" validate:"required"`
 	Merchants		[]*Merchant		`gorm:"many2many:merchant_users;"`
-	// Balance 		float64 		`json:"balance"`
+	Balance 		float64 		`json:"balance"`
 	// Transaction 	[]*Transaction	 
 }
 

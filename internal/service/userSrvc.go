@@ -6,7 +6,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(entities.User) (*entities.User, bool)
+	// CreateUser(entities.User) (*entities.User, bool)
 	FindUserById(string) (*entities.User, bool)
 	FindUserByPhone(string) (*entities.User, bool)
 	// AddMerchant(entities.Merchant, entities.User)(bool)
@@ -25,15 +25,15 @@ func NewUserSrvc (userRepo repositories.UserRepo) UserService{
 	}
 }
 
-func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User) (*entities.User, bool){
-	User, err := userSrvc.UserRepo.CreateUser(user)
-	if err!= nil{
-		return nil,false
-	}
+// func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User) (*entities.User, bool){
+// 	User, err := userSrvc.UserRepo.CreateUser(user)
+// 	if err!= nil{
+// 		return nil,false
+// 	}
 	
-	return User,true
+// 	return User,true
 
-}
+// }
 
 
 func (userSrvc  *UserSrvcImpl) FindUserById (userId string) (*entities.User, bool){

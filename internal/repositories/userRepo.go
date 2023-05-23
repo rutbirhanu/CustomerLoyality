@@ -15,6 +15,7 @@ type UserRepo interface {
 	AddMerchant(string, entities.User) (*entities.Merchant, *entities.User, error)
 	UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
 	UpdateUser(user *entities.User) error
+	// CheckBalance()
 	// DeleteAll()(error)
 }
 
@@ -36,7 +37,7 @@ func (db *UserRepoImpl) CreateUser(user entities.User,merchantId string ) (*enti
 		return nil,err
 	}
 	user.Merchants=append(user.Merchants, merchant)
-	err = db.Db.Create(&user).Error
+	err = db.Db.Save(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 
 func (db *UserRepoImpl) FindUserById(id string) (*entities.User, error) {
 	user := entities.User{}
-	err := db.Db.First(&user, "id=?", id).Error
+	err := db.Db.Preload("Merchants").First(&user, "id=?", id).Error
 	if err != nil {
 		return nil, err
 	}
