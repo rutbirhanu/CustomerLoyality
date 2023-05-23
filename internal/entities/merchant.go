@@ -30,10 +30,10 @@ type GetAllUsers struct {
 	LastPage int64
 }
 
-type UserMerchant struct {
+type MerchantUsers struct {
 	Model
-	MerchantID string   `gorm:"primaryKey" json:"merchantid"`
+	MerchantID string   `gorm:"foreignKey" json:"merchantid"`
 	// Merchant   Merchant `json:"merchant"`
-	UserID     string   `gorm:"primaryKey"  json:"userid"`
+	UserID     string   `gorm:"foreignKey"  json:"userid"`
 	// User       User     `json:"user"`
 }

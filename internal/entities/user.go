@@ -6,7 +6,7 @@ type User struct{
 	UserName		string		`json:"username" validate:"required"`
 	Merchants		[]*Merchant		`gorm:"many2many:merchant_users;"`
 	// Balance 		float64 		`json:"balance"`
-	// Transaction 	Transaction			`gorm:"foreignkey:transaction.ID"`
+	// Transaction 	[]*Transaction	 
 }
 
 
@@ -22,6 +22,8 @@ type Transaction struct{
 	Amount 		float64 	`json:"amount"`
 	Type 		string		`json:"type"`
 	Action	 	string		`json:"action"`
+	To 			string 		`json:"to"`
+	UserMerchantID 		string  	`gorm:"foreignkey"`
 
 }
 

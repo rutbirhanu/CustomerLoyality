@@ -9,7 +9,7 @@ type UserRepo interface {
 	// BuyAirtime()
 	// Donate()
 	// TransferCash()
-	CreateUser(entities.User) (*entities.User, error)
+	CreateUser(entities.User, string) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
 	AddMerchant(string, entities.User) (*entities.Merchant, *entities.User, error)
@@ -30,15 +30,18 @@ func NewUserRepo(db *gorm.DB, merchRepo MerchantRepo) UserRepo {
 	}
 }
 
-func (db *UserRepoImpl) CreateUser(user entities.User) (*entities.User, error) {
-	
-	err := db.Db.Create(&user).Error
+func (db *UserRepoImpl) CreateUser(user entities.User,merchantId string ) (*entities.User, error) {
+	merchant,err := db.merchantRepo.FindMerchantById(merchantId)
+	if err!=nil{
+		return nil,err
+	}
+	user.Merchants=append(user.Merchants, merchant)
+	err = db.Db.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
 
 	return &user, nil
-
 }
 
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
