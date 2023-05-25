@@ -8,12 +8,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Role string
+
+const (
+	Admin  		Role="admin"
+	User 		Role="user"
+	Merchant	Role="merchant"
+)
+
+
 type ClaimData struct {
 	PhoneNumber string
 	Name        string
 	UserId      string
 	jwt.StandardClaims
 }
+
 
 func HashPassword(password string) string {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -31,8 +41,8 @@ func VerifyPassword(userPass string, providedPass string) bool {
 		return false
 	}
 	return true
-
 }
+
 
 func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte) (string, error) {
  tokenClaim:= & ClaimData{

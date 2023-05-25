@@ -1,16 +1,17 @@
 package entities
 
+import "gorm.io/gorm"
+
 type Merchant struct {
 	Model
-	MerchantName 	string	 ` validate:" required , max=30"  json:"name" `
-	Password     	string	 ` validate:" required , max=30, min=6 "  json:"password" `
-	PhoneNumber  	string	 ` validate:" required "  json:"phonenumber" `
-	Token        	string	 `json:"token"`
-	BusinessName 	string	 ` validate:" required , max=30"  json:"businessname" `
-	PrivateKey   	string	
-	PublicKey    	string	
-	Users        	[]*User   `gorm:"many2many:merchant_users;"`
-
+	MerchantName string ` validate:" required , max=30"  json:"name" `
+	Password     string ` validate:" required , max=30, min=6 "  json:"password" `
+	PhoneNumber  string ` gorm:"primary_key" validate:" required "  json:"phonenumber" `
+	Token        string `json:"token"`
+	BusinessName string ` validate:" required , max=30"  json:"businessname" `
+	PrivateKey   string
+	PublicKey    string
+	Users        []*User `gorm:"many2many:merchant_users;"`
 }
 
 type MerchantLogin struct {
@@ -31,9 +32,11 @@ type GetAllUsers struct {
 }
 
 type MerchantUsers struct {
-	Model
-	MerchantID string   `gorm:"foreignKey" json:"merchantid"`
+	gorm.Model
+	MerchantID string ` json:"merchantid"`
+	MerchantPhone 	string 	`gorm:"foreignKey"  json:"merchantphone"`
 	// Merchant   Merchant `json:"merchant"`
-	UserID     string   `gorm:"foreignKey"  json:"userid"`
+	UserPhone  string		`gorm:"foreignKey"  json:"userphone"`
+	UserID string `gorm:"foreignKey"  json:"userid"`
 	// User       User     `json:"user"`
 }

@@ -13,26 +13,15 @@ import (
 func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := entities.User{}
-		merchantId:=c.Param("merchantid")
+		merchantId := c.Param("merchantid")
 		err := c.Bind(&user)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
 
-		registered, _ := userSrvc.FindUserByPhone(user.PhoneNumber)
-		// for 
-		// registered.Merchants
-		if registered != nil  {
-			return c.JSON(http.StatusBadRequest, "already created phone")
-
-		}
-		// if !found {
-		// 	return c.JSON(http.StatusBadRequest, "not found")
-		// }
-
-		userData,err := repo.CreateUser(user, merchantId)
-		if err!=nil {
-			return c.JSON(http.StatusBadRequest,err)
+		userData, err := repo.CreateUser(user, merchantId)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
 		}
 
 		c.JSON(http.StatusCreated, userData)
@@ -42,14 +31,15 @@ func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo
 	}
 }
 
-func Login(repo repositories.UserRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
+func Login(repo repositories.UserRepo, srvc service.UserService, mash repositories.UserMerchantRepo, merRepo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user:= entities.User{}
+		user := entities.User{}
 		err := c.Bind(&user)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse")
 		}
-		merchantId := c.Param("merchantid")
+		merchantId := c.Param("merchantphone")
+		userId := c.Param("userphone")
 
 		// Merchant, err := merRepo.FindMerchantById(merchantId)
 		// if err != nil {
@@ -61,7 +51,7 @@ func Login(repo repositories.UserRepo, srvc service.UserService, merRepo reposit
 		// 	return c.JSON(http.StatusBadRequest, "user with phone number already exist")
 		// }
 
-		mer, uss, err := repo.AddMerchant(merchantId, user)
+		mer, uss, err := mash.AddMerchant(merchantId, userId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}

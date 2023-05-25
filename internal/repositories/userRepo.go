@@ -31,12 +31,14 @@ func NewUserRepo(db *gorm.DB, merchRepo MerchantRepo) UserRepo {
 	}
 }
 
-func (db *UserRepoImpl) CreateUser(user entities.User,merchantId string ) (*entities.User, error) {
-	merchant,err := db.merchantRepo.FindMerchantById(merchantId)
-	if err!=nil{
-		return nil,err
+func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
+	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, err
 	}
-	user.Merchants=append(user.Merchants, merchant)
+	user.Merchants = append(user.Merchants, merchant)
+	// db.Db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&user)
+	db.Db.Model(&user).Association("Merchants").Replace(&user.Merchants)
 	err = db.Db.Save(&user).Error
 	if err != nil {
 		return nil, err
@@ -48,7 +50,7 @@ func (db *UserRepoImpl) CreateUser(user entities.User,merchantId string ) (*enti
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{}
 
-	err := db.Db.Where("phone_number=?", phone).Take(&user).Error
+	err := db.Db.Preload("Merchants").Where("phone_number=?", phone).Take(&user).Error
 	// err := db.Db.Where("phone_number=?", phone).Take(&user).Error
 	if err != nil {
 		return nil, err
@@ -81,7 +83,7 @@ func (db *UserRepoImpl) FindUserById(id string) (*entities.User, error) {
 // 	if err := db.Db.Model(&user).Association("Users").Append(&merchant); err != nil {
 // 		return nil, nil, err
 // 	}
-	
+
 // 	return merchant, user, nil
 // }
 
@@ -132,7 +134,6 @@ func (db *UserRepoImpl) UpdateUser(user *entities.User) error {
 	}
 	return nil
 }
-
 
 func (db *UserRepoImpl) AddMerchant(merchantId string, user entities.User) (*entities.Merchant, *entities.User, error) {
 

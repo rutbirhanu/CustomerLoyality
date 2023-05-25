@@ -1,14 +1,14 @@
 package repositories
 
 import (
-	// "github.com/santimpay/customer-loyality/internal/entities"
+	"github.com/santimpay/customer-loyality/internal/entities"
 	"gorm.io/gorm"
 )
 
 type UserMerchantRepo interface {
 
 	// CreateUserMerchant(entities.UserMerchant) (*entities.UserMerchant, error)
-	// AddMerchant( string, string) (*entities.Merchant, *entities.User, error)
+	AddMerchant(string, string) (*entities.Merchant, *entities.User, error)
 }
 
 type UserMerchantRepoImpl struct {
@@ -25,15 +25,19 @@ func NewUserMerchantRepo(db *gorm.DB, mer MerchantRepo, uss UserRepo) UserMercha
 	}
 }
 
-// func (db *UserMerchantRepoImpl) AddMerchant(merchantId string,  user entities.User) (*entities.Merchant, *entities.User, error) {
-// 	merchant,err:= db.merchantRepo.FindMerchantById(merchantId)
-// 	if err!=nil{
-// 		return nil,nil,err
-// 	}
+func (db *UserMerchantRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
+	merchant, err := db.merchantRepo.FindMerchantByPhone(merchantId)
+	if err != nil {
+		return nil, nil, err
+	}
+	user, err := db.userRepo.FindUserByPhone(userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	db.Db.Omit("Users").Updates(&merchant)
+	merchant.Users = append(merchant.Users, user)
 
-// 	merchant.Users = append(merchant.Users, &user)
-// 	db.Db.Save(&merchant)
+	db.Db.Session(&gorm.Session{FullSaveAssociations: true}).Model(&merchant).Association("User").Replace(&merchant.Users)
 
-// 	return merchant, &user, nil
-// }
-
+	return merchant, user, nil
+}

@@ -23,6 +23,7 @@ type MerchantRepo interface {
 	GetAllMerchants() (*[]entities.Merchant, error)
 	DeleteAll() error
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
+	// UpdataUserPoints(string , float64) error
 }
 
 type MerchantRepoImpl struct {
@@ -99,7 +100,7 @@ func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
 func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, error) {
 	var merchant entities.Merchant
 
-	err := db.Db.Find(&merchant, "id=?", id).Error
+	err := db.Db.Preload("Users").Find(&merchant, "id=?", id).Error
 
 
 	if err != nil {
@@ -111,7 +112,7 @@ func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, err
 func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchant, error) {
 	merchant := entities.Merchant{}
 
-	err := db.Db.Where("phone_number=?", phone).Take(&merchant).Error
+	err := db.Db.Preload("Users").Where("phone_number=?", phone).Take(&merchant).Error
 	if err != nil {
 		return nil, err
 	}
