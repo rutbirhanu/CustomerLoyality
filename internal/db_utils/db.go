@@ -19,9 +19,19 @@ func Connect(config *configs.DbConfig) (*gorm.DB, error) {
 	}
 	if err = db.AutoMigrate(&entities.Merchant{},
 		&entities.User{},
-		&entities.MerchantUsers{},
+		&entities.MerchantUser{},
 		
 	); err != nil {
+		return nil, err
+	}
+
+	err= db.SetupJoinTable(&entities.User{}, "Merchants", &entities.MerchantUser{})
+	if err != nil {
+		return nil, err
+	}
+	
+	err= db.SetupJoinTable(&entities.Merchant{}, "Users", &entities.MerchantUser{})
+	if err != nil {
 		return nil, err
 	}
 

@@ -10,16 +10,18 @@ import (
 type TransactionRepo interface {
 	// CreateEntry()
 	// UpdateBalance()
-	CreateTransaction() error
+	// CreateTransaction() error
 }
 
 type TransactionRepoImpl struct {
 	Db *gorm.DB
+	UserRepo 	UserRepo
 }
 
-func NewTransactionRepo(db *gorm.DB) TransactionRepo {
+func NewTransactionRepo(db *gorm.DB, userRepo UserRepo) TransactionRepo {
 	return &TransactionRepoImpl{
 		Db: db,
+		UserRepo: userRepo,
 	}
 }
 
@@ -41,7 +43,7 @@ func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, 
 		amount = +amount
 	}
 
-	UserWithMerchant := entities.MerchantUsers{}
+	UserWithMerchant := entities.MerchantUser{}
 	err := db.Db.First(&UserWithMerchant, userMerchantId).Error
 	if err != nil {
 		return err
@@ -73,15 +75,47 @@ func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, 
 
 }
 
-func (db *TransactionRepoImpl) CreateTransaction() error {
-	transaction := entities.Transaction{}
-	err := db.PerformTransaction(transaction.Amount, transaction.Action, transaction.Type, transaction.To, transaction.UserMerchantID)
-	if err != nil {
-		return nil
+// func (db *TransactionRepoImpl) CreateTransaction() error {
+// 	transaction := entities.Transaction{}
+// 	err := db.PerformTransaction(transaction.Amount, transaction.Action, transaction.Type, transaction.To, transaction.UserMerchantID)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	err = db.Db.Create(&transaction).Error
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	return nil
+// }
+
+
+func (db * TransactionRepoImpl) GiveReward(amount float64, reason string, userMerchantId string) (*entities.Reward,error){
+
+	point :=  (amount/10)
+	
+	reward := entities.Reward{
+		Points: point,
+		Reason: reason,
+		UserMerchantId: userMerchantId,
 	}
-	err = db.Db.Create(&transaction).Error
+	
+	UserWithMerchant := entities.MerchantUser{}
+	err := db.Db.First(&UserWithMerchant, userMerchantId).Error
 	if err != nil {
-		return nil
+		return nil,err
 	}
-	return nil
+
+	user := entities.User{}
+
+	err = db.Db.First(&user, UserWithMerchant.UserID).Error
+	if err != nil {
+		return nil,err
+	}
+	user.Balance+= reward.Points
+	err = db.UserRepo.UpdateUser(&user)
+	if err!=nil{
+		return nil,err
+	}
+return &reward,nil
+
 }

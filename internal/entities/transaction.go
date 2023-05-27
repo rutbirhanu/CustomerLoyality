@@ -13,7 +13,8 @@ type Transaction struct {
 
 type Reward struct{
 	Model
-	Points 		float64 		`json:"amount"`
-	Reason 		string 			`json:"reason"`
+	Points 				float64 		`json:"amount"`
+	Reason 				string 			`json:"reason"`
+	UserMerchantId 		string			`gorm:"foreignkey"`
 }
 

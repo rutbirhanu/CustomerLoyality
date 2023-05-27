@@ -31,15 +31,15 @@ func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo
 	}
 }
 
-func Login(repo repositories.UserRepo, srvc service.UserService, mash repositories.UserMerchantRepo, merRepo repositories.MerchantRepo) echo.HandlerFunc {
+func Login(repo repositories.UserRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user := entities.User{}
-		err := c.Bind(&user)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, "can not parse")
-		}
-		merchantId := c.Param("merchantphone")
-		userId := c.Param("userphone")
+		// user := entities.User{}
+		// err := c.Bind(&user)
+		// if err != nil {
+		// 	return c.JSON(http.StatusBadRequest, "can not parse")
+		// }
+		merchantId := c.Param("merchantid")
+		userId := c.Param("userid")
 
 		// Merchant, err := merRepo.FindMerchantById(merchantId)
 		// if err != nil {
@@ -51,7 +51,7 @@ func Login(repo repositories.UserRepo, srvc service.UserService, mash repositori
 		// 	return c.JSON(http.StatusBadRequest, "user with phone number already exist")
 		// }
 
-		mer, uss, err := mash.AddMerchant(merchantId, userId)
+		mer, uss, err := repo.AddMerchant(merchantId, userId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
@@ -97,5 +97,17 @@ func GetUserById(srvc service.UserService) echo.HandlerFunc {
 		}
 		c.JSON(http.StatusAccepted, user)
 		return nil
+	}
+}
+
+
+func GetMerchantUserById(repo repositories.MerchantUserRepo) echo.HandlerFunc{
+	return func(c echo.Context) error{
+		id:= c.Param("merchantuserid")
+		merchantUser, err:= repo.FindMerchantUserById(id)
+		if err!=nil{
+			return c.JSON(http.StatusBadRequest, err)
+		} 
+		return c.JSON(http.StatusAccepted, merchantUser)
 	}
 }

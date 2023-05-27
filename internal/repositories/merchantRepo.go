@@ -16,7 +16,7 @@ type MerchantRepo interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, error)
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
-	RetrivePublicKey(merchantId string)(string,error)
+	RetrivePublicKey(merchantId string) (string, error)
 	// GetMerchant(entities.Merchant) *entities.Merchant
 	GenerateKeyPair() (string, string, error)
 	UpdateMerchant(entities.Merchant) error
@@ -100,13 +100,20 @@ func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
 func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, error) {
 	var merchant entities.Merchant
 
-	err := db.Db.Preload("Users").Find(&merchant, "id=?", id).Error
-
-
+	err := db.Db.Preload("Users").Where("id=?", id).Take(&merchant).Error
 	if err != nil {
 		return nil, err
 	}
 	return &merchant, nil
+	// 	err := db.Db.Find(&merchant, "id=?", id).Error
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	err = db.Db.Model(&merchant).Association("Users").Find(&merchant.Users)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	return &merchant, nil
 }
 
 func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchant, error) {
@@ -120,10 +127,10 @@ func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchan
 
 }
 
-func (db MerchantRepoImpl) RetrivePublicKey(phone string)(string,error){
-	merchant,err:= db.FindMerchantByPhone(phone)
-	if err!=nil{
-		return "",err
+func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
+	merchant, err := db.FindMerchantByPhone(phone)
+	if err != nil {
+		return "", err
 	}
 	publicKey := merchant.PublicKey
 	return publicKey, nil

@@ -12,7 +12,7 @@ type UserRepo interface {
 	CreateUser(entities.User, string) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
-	AddMerchant(string, entities.User) (*entities.Merchant, *entities.User, error)
+	AddMerchant(string, string) (*entities.Merchant, *entities.User, error)
 	UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
 	UpdateUser(user *entities.User) error
 	// CheckBalance()
@@ -32,14 +32,8 @@ func NewUserRepo(db *gorm.DB, merchRepo MerchantRepo) UserRepo {
 }
 
 func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
-	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
-	if err != nil {
-		return nil, err
-	}
-	user.Merchants = append(user.Merchants, merchant)
-	// db.Db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&user)
-	db.Db.Model(&user).Association("Merchants").Replace(&user.Merchants)
-	err = db.Db.Save(&user).Error
+
+	err := db.Db.Create(&user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -135,19 +129,46 @@ func (db *UserRepoImpl) UpdateUser(user *entities.User) error {
 	return nil
 }
 
-func (db *UserRepoImpl) AddMerchant(merchantId string, user entities.User) (*entities.Merchant, *entities.User, error) {
+func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
+
+	user, err := db.FindUserById(userId)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
 	if err != nil {
 		return nil, nil, err
 	}
-	// user, err:= db.FindUserById(userId)
-	// if err != nil {
-	// 	return nil, nil, err
-	// }
-	merchant.Users = append(merchant.Users, &user)
-	// user.Merchants=append(user.Merchants, merchant)
-	db.Db.Save(&merchant)
 
-	return merchant, &user, nil
+	merchantExists := false
+	for _, m := range merchant.Users {
+		if m.PhoneNumber == user.PhoneNumber {
+			merchantExists = true
+			break
+		}
+	}
+
+	if !merchantExists {
+		merchant.Users = append(merchant.Users, user)
+		// user.Merchants=append(user.Merchants, merchant)
+		// err = db.Db.Model(&merchant).Association("Users").Append(&user)
+		// if err != nil {
+		// 	return nil, nil, err
+		// }
+		
+		err = db.Db.Model(&user).Association("Merchants").Append(&merchant)
+		if err != nil {
+			return nil, nil, err
+		}
+		// err := db.Db.Save(&merchant).Error
+		// if err != nil {
+		// 	return nil, nil, err
+		// }
+	}
+
+	return merchant, user, nil
+
 }
+
+

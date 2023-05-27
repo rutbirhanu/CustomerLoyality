@@ -38,16 +38,17 @@ func main() {
 	// var merchantRepo repositories.MerchantRepo
 	merchantRepo := repositories.NewMerchantRepo(db)
 	userRepo := repositories.NewUserRepo(db, merchantRepo)
-	uermerRepo:=repositories.NewUserMerchantRepo(db,merchantRepo,userRepo)
+	merchantUserRepo:=repositories.NewMerchantUserRepo(db)
 	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
 	app := echo.New()
 	app.GET("/allMerchant", handlers.GetAll(merchantSrvc))
 	app.GET("/getUser/:userid", handlers.GetUserById(userSrvc))
+	app.GET("/getMerchantUser/:merchantuserid", handlers.GetMerchantUserById(merchantUserRepo))
 
 	app.GET("/getMerchant/:merchantid", handlers.FindMerchantById(merchantSrvc))
-	app.POST("/addMerchant/:merchantid/:userid", handlers.Login(userRepo, userSrvc,uermerRepo, merchantRepo))
+	app.POST("/addMerchant/:merchantid/:userid", handlers.Login(userRepo, userSrvc, merchantRepo))
 	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
 	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
 	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
