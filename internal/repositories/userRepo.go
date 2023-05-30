@@ -143,7 +143,7 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 
 	merchantExists := false
 	for _, m := range merchant.Users {
-		if m.PhoneNumber == user.PhoneNumber {
+		if m.ID == user.ID {
 			merchantExists = true
 			break
 		}
@@ -156,8 +156,13 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 		// if err != nil {
 		// 	return nil, nil, err
 		// }
-		
-		err = db.Db.Model(&user).Association("Merchants").Append(&merchant)
+		newMerchantUser := entities.MerchantUser{
+			UserID: user.ID,
+			MerchantID: merchant.ID,
+		}
+		err= db.Db.Create(&newMerchantUser).Error
+
+		// err = db.Db.Model(&user).Association("Merchants").Append(&merchant)
 		if err != nil {
 			return nil, nil, err
 		}

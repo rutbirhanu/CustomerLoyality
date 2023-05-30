@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/santimpay/customer-loyality/internal/entities"
@@ -34,7 +36,7 @@ func (db *TransactionRepoImpl) WithTrx(trxDB *gorm.DB) TransactionRepo {
 	
 }
 
-func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, action string, to string, userMerchantId string) error {
+func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, action string, to string, MerchantUserId string) error {
 
 	switch action {
 	case "debit":
@@ -44,22 +46,22 @@ func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, 
 	}
 
 	UserWithMerchant := entities.MerchantUser{}
-	err := db.Db.First(&UserWithMerchant, userMerchantId).Error
+	err := db.Db.First(&UserWithMerchant,"id=?", MerchantUserId).Error
 	if err != nil {
 		return err
 	}
 	user := entities.User{}
 
-	err = db.Db.First(&user, UserWithMerchant.UserID).Error
+	err = db.Db.First(&user, "id=?",UserWithMerchant.UserID).Error
 	if err != nil {
 		return err
 	}
 	if user.Balance < amount {
-		return nil
+		return errors.New("balance not sufficient")
 	}
 
 	switch types {
-	case "cashOut", "donate":
+	case "cashOut", "mobile card", "reuse":
 		toUser := entities.User{}
 		err = db.Db.First(&toUser).Error
 		if err != nil {
@@ -68,11 +70,15 @@ func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, 
 
 		toUser.Balance -= amount
 	}
-
+		
 	user.Balance += amount
 
 	return nil
 
+}
+
+func Error(s string) {
+	panic("unimplemented")
 }
 
 // func (db *TransactionRepoImpl) CreateTransaction() error {
@@ -93,14 +99,14 @@ func (db * TransactionRepoImpl) GiveReward(amount float64, reason string, userMe
 
 	point :=  (amount/10)
 	
-	reward := entities.Reward{
+	reward := entities.Collection{
 		Points: point,
 		Reason: reason,
 		UserMerchantId: userMerchantId,
 	}
 	
 	UserWithMerchant := entities.MerchantUser{}
-	err := db.Db.First(&UserWithMerchant, userMerchantId).Error
+	err := db.Db.First(&UserWithMerchant,"id=?", userMerchantId).Error
 	if err != nil {
 		return nil,err
 	}
@@ -117,5 +123,36 @@ func (db * TransactionRepoImpl) GiveReward(amount float64, reason string, userMe
 		return nil,err
 	}
 return &reward,nil
+
+}
+
+
+func (db * TransactionRepoImpl) Donate(charityid string, MerchantUserId string, amount float64)(error){
+	var account string
+	for _,value := range entities.Organizations{
+		if charityid == value["id"]{
+			account=value["account"]
+		}
+	}
+
+	UserWithMerchant := entities.MerchantUser{}
+	err := db.Db.First(&UserWithMerchant,"id=?", MerchantUserId).Error
+	if err != nil {
+		return err
+	}
+	user := entities.User{}
+
+	err = db.Db.First(&user, "id=?",UserWithMerchant.UserID).Error
+	if err != nil {
+		return err
+	}
+	if user.Balance < amount {
+		return errors.New("not enough balance")
+	}
+fmt.Print(account)
+
+	 user.Balance -= amount
+	return nil
+
 
 }

@@ -53,6 +53,9 @@ func main() {
 	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
 	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
 	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
+	// app.POST("/donate/:charityid",)
+	app.POST("/reward/:merchantuserid",handlers.RewardController)
+	// app.POST("/mobileCard",)
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 

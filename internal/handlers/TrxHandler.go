@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
 )
@@ -12,10 +13,13 @@ import (
 
 // }
 
+func RewardController(c echo.Context) error {
 
-func RewardController(c echo.Context) error{
+	reward := entities.Collection{}
+	err := c.Bind(&reward)
+	if err != nil {
+		return err
+	}
 
-	reward := entities.Reward{}
-	fmt.Print(reward)
-	return nil
+	return c.JSON(http.StatusAccepted, reward)
 }
