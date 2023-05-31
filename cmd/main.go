@@ -11,6 +11,7 @@ import (
 	"github.com/santimpay/customer-loyality/internal/db_utils"
 
 	"github.com/santimpay/customer-loyality/internal/handlers"
+	// "github.com/santimpay/customer-loyality/internal/middleware"
 	"github.com/santimpay/customer-loyality/internal/handlers/auth"
 	"github.com/santimpay/customer-loyality/internal/repositories"
 	"github.com/santimpay/customer-loyality/internal/service"
@@ -38,23 +39,26 @@ func main() {
 	// var merchantRepo repositories.MerchantRepo
 	merchantRepo := repositories.NewMerchantRepo(db)
 	userRepo := repositories.NewUserRepo(db, merchantRepo)
-	merchantUserRepo:=repositories.NewMerchantUserRepo(db)
+	WalletRepo:=repositories.NewWalletRepo(db)
 	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
 	app := echo.New()
+	// merchantRoute:= app.Group("/merchant")
+	// merchantRoute.Use(middleware.Auth(merchantRepo))
+	// merchantRoute.GET("/allMerchant", handlers.GetAll(merchantSrvc))
 	app.GET("/allMerchant", handlers.GetAll(merchantSrvc))
 	app.GET("/getUser/:userid", handlers.GetUserById(userSrvc))
-	app.GET("/getMerchantUser/:merchantuserid", handlers.GetMerchantUserById(merchantUserRepo))
+	app.GET("/getWallet/:Walletid", handlers.GetWalletById(WalletRepo))
 
 	app.GET("/getMerchant/:merchantid", handlers.FindMerchantById(merchantSrvc))
-	app.POST("/addMerchant/:merchantid/:userid", handlers.Login(userRepo, userSrvc, merchantRepo))
+	app.POST("/addMerchant/:merchantid/:userid",handlers.Login(userRepo, userSrvc, merchantRepo))
 	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
 	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
 	app.POST("/createUser/:merchantid", handlers.RegisterUser(userSrvc, userRepo))
 	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
 	// app.POST("/donate/:charityid",)
-	app.POST("/reward/:merchantuserid",handlers.RewardController)
+	app.POST("/reward/:Walletid",handlers.RewardController)
 	// app.POST("/mobileCard",)
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))

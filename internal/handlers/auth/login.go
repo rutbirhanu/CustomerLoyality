@@ -28,7 +28,7 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if err!=nil{
 			c.JSON(http.StatusBadGateway,err)
 		}
-		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private))
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private), string(util.Merchant))
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}
@@ -44,7 +44,6 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		c.SetCookie(cookie)
 
 		
-		// c.JSON(http.StatusAccepted, privateKey)
 		c.JSON(http.StatusAccepted,data)
 		return nil
 	}

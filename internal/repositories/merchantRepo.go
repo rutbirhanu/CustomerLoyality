@@ -105,15 +105,7 @@ func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, err
 		return nil, err
 	}
 	return &merchant, nil
-	// 	err := db.Db.Find(&merchant, "id=?", id).Error
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	err = db.Db.Model(&merchant).Association("Users").Find(&merchant.Users)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	return &merchant, nil
+	
 }
 
 func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchant, error) {
@@ -136,24 +128,6 @@ func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
 	return publicKey, nil
 }
 
-// func (db *MerchantRepoImpl) AddUser(userId string, merchantId string) error {
-// 	merchant, err := db.FindMerchantById(merchantId)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	user, err := db.userRepo.FindUserById(userId)
-
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
-// 		return err
-// 	}
-// 	if err := db.Db.Model(&user).Association("Users").Append(merchant); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {
 

@@ -11,6 +11,8 @@ type User struct {
 	PhoneNumber string      `  json:"phonenumber" validate:"required"`
 	UserName    string      `json:"username" validate:"required"`
 	Merchants   []*Merchant `gorm:"many2many:merchant_users;"`
+	PrivateKey   string
+	PublicKey    string
 	// Transaction 	[]*Transaction
 }
 
@@ -19,14 +21,14 @@ type UserLogin struct {
 }
 
 
-type MerchantUser struct {
+type Wallet struct {
 	ID         		string		 `gorm:"primary_key;"`
 	MerchantID 		string		 `json:"merchantid"`
 	UserID 			string 		`json:"userid"`
 	Balance   		float64 	`json:"balance"`
 }
 
-func (um *MerchantUser) BeforeCreate(tx *gorm.DB) (err error) {
+func (um *Wallet) BeforeCreate(tx *gorm.DB) (err error) {
 	uuid, err := uuid.New().MarshalText()
 	if err != nil {
 		return err
@@ -35,9 +37,3 @@ func (um *MerchantUser) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-
-
-// type MerchantUser struct{
-// 	MerchantID		string
-// 	UserID			string
-// }

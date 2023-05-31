@@ -2,34 +2,46 @@ package handlers
 
 import (
 	"net/http"
-
-	// "github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"github.com/santimpay/customer-loyality/internal/repositories"
 	"github.com/santimpay/customer-loyality/internal/service"
+	"github.com/santimpay/customer-loyality/internal/util"
 )
 
 func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user := entities.User{}
-		merchantId := c.Param("merchantid")
 		err := c.Bind(&user)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
 
-		userData, err := repo.CreateUser(user, merchantId)
+		privateKey,publicKey, err := repo.GenerateKeyPair()
+		
+		if err != nil {
+			return err
+		}
+
+		userData := entities.User{
+			PhoneNumber: user.PhoneNumber,
+			UserName: user.UserName,
+			PrivateKey: privateKey,
+			PublicKey: publicKey,
+		}
+
+		User, err := repo.CreateUser(userData)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
 
-		c.JSON(http.StatusCreated, userData)
+		c.JSON(http.StatusCreated, User)
 
 		return nil
 
 	}
 }
+
 
 func Login(repo repositories.UserRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -62,32 +74,6 @@ func Login(repo repositories.UserRepo, srvc service.UserService, merRepo reposit
 	}
 }
 
-// func Login(repo repositories.UserMerchantRepo, usrepo repositories.UserRepo) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-
-// 		user := entities.UserLogin{}
-// 		err:=c.Bind(&user)
-
-// 		// validate := validator.New()
-// 		// err = validate.Struct(user)
-// 		// validationErrors := err.(validator.ValidationErrors)
-// 		if err != nil {
-// 			return c.JSON(http.StatusBadRequest, err)
-// 		}
-
-// 		merchantId := c.Param("merchantid")
-
-// 		mer, uss, err := repo.AddMerchant(merchantId, user.PhoneNumber)
-// 		if err != nil {
-// 			return c.JSON(http.StatusBadRequest, err)
-// 		}
-// 		c.JSON(http.StatusAccepted, mer)
-// 		c.JSON(http.StatusAccepted, uss)
-
-// 		return nil
-// 	}
-// }
-
 func GetUserById(srvc service.UserService) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		id := c.Param("userid")
@@ -101,13 +87,55 @@ func GetUserById(srvc service.UserService) echo.HandlerFunc {
 }
 
 
-func GetMerchantUserById(repo repositories.MerchantUserRepo) echo.HandlerFunc{
+func GetWalletById(repo repositories.WalletRepo) echo.HandlerFunc{
 	return func(c echo.Context) error{
-		id:= c.Param("merchantuserid")
-		merchantUser, err:= repo.FindMerchantUserById(id)
+		id:= c.Param("Walletid")
+		Wallet, err:= repo.FindWalletById(id)
 		if err!=nil{
 			return c.JSON(http.StatusBadRequest, err)
 		} 
-		return c.JSON(http.StatusAccepted, merchantUser)
+		return c.JSON(http.StatusAccepted, Wallet)
+	}
+}
+
+
+func Loginn(srv service.MerchantService, repo repositories.MerchantRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		data := entities.MerchantLogin{}
+		err := c.Bind(&data)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "can not parse data")
+		}
+		user, exist := srv.FindMerchantByPhone(data.PhoneNumber)
+		if !exist {
+			return c.JSON(http.StatusBadRequest, "incorrect input ")
+		}
+		passCheck := util.VerifyPassword(data.Password, user.Password)
+		if !passCheck {
+			return c.JSON(http.StatusConflict, "incorrect password")
+		}
+		private , _ ,err:=repo.GenerateKeyPair()
+		if err!=nil{
+			c.JSON(http.StatusBadGateway,err)
+		}
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private), string(util.Merchant))
+		if err != nil {
+			return c.JSON(http.StatusConflict, "can not create token")
+		}
+		user.Token = token
+		data.Token = token
+
+		cookie:= &http.Cookie{
+			Name: "auth-token",
+			Value: token,
+		}
+		cookie.SameSite=http.SameSiteLaxMode
+		cookie.HttpOnly=true
+		c.SetCookie(cookie)
+
+		
+		// c.JSON(http.StatusAccepted, privateKey)
+		c.JSON(http.StatusAccepted,data)
+		return nil
 	}
 }

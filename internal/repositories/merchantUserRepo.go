@@ -5,25 +5,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type MerchantUserRepo interface {
-	FindMerchantUserById(string)  (*entities.MerchantUser, error)
+type WalletRepo interface {
+	FindWalletById(string)  (*entities.Wallet, error)
 	// CreateUserMerchant(entities.UserMerchant) (*entities.UserMerchant, error)
 	// AddMerchant(string, string) (*entities.Merchant, *entities.User, error)
 }
 
-type MerchantUserRepoImpl struct {
+type WalletRepoImpl struct {
 	Db           *gorm.DB
 }
 
-func NewMerchantUserRepo(db *gorm.DB) MerchantUserRepo {
-	return &MerchantUserRepoImpl{
+func NewWalletRepo(db *gorm.DB) WalletRepo {
+	return &WalletRepoImpl{
 		Db: db,
 	}
 }
 
 
-func (db *MerchantUserRepoImpl) FindMerchantUserById(id string) (*entities.MerchantUser, error){
-userMerchant := entities.MerchantUser{}
+func (db *WalletRepoImpl) FindWalletById(id string) (*entities.Wallet, error){
+userMerchant := entities.Wallet{}
 if err:= db.Db.Find(&userMerchant, "id=?", id).Error; err!=nil{
 	return nil,err
 }

@@ -3,13 +3,18 @@ package repositories
 import (
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"gorm.io/gorm"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 )
 
 type UserRepo interface {
 	// BuyAirtime()
 	// Donate()
 	// TransferCash()
-	CreateUser(entities.User, string) (*entities.User, error)
+	GenerateKeyPair() (string, string, error)
+	CreateUser(entities.User) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
 	AddMerchant(string, string) (*entities.Merchant, *entities.User, error)
@@ -31,7 +36,7 @@ func NewUserRepo(db *gorm.DB, merchRepo MerchantRepo) UserRepo {
 	}
 }
 
-func (db *UserRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
+func (db *UserRepoImpl) CreateUser(user entities.User) (*entities.User, error) {
 
 	err := db.Db.Create(&user).Error
 	if err != nil {
@@ -62,24 +67,6 @@ func (db *UserRepoImpl) FindUserById(id string) (*entities.User, error) {
 	return &user, nil
 }
 
-// func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
-
-// 	user, err := db.FindUserById(userId)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
-// 	if err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	if err := db.Db.Model(&user).Association("Users").Append(&merchant); err != nil {
-// 		return nil, nil, err
-// 	}
-
-// 	return merchant, user, nil
-// }
 
 func (db *UserRepoImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error) {
 	User, err := db.FindUserByPhone(user.PhoneNumber)
@@ -156,11 +143,11 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 		// if err != nil {
 		// 	return nil, nil, err
 		// }
-		newMerchantUser := entities.MerchantUser{
+		newWallet := entities.Wallet{
 			UserID: user.ID,
 			MerchantID: merchant.ID,
 		}
-		err= db.Db.Create(&newMerchantUser).Error
+		err= db.Db.Create(&newWallet).Error
 
 		// err = db.Db.Model(&user).Association("Merchants").Append(&merchant)
 		if err != nil {
@@ -176,4 +163,30 @@ func (db *UserRepoImpl) AddMerchant(merchantId string, userId string) (*entities
 
 }
 
+
+func (db *UserRepoImpl) GenerateKeyPair() (string, string, error) {
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", err
+	}
+
+	privateKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return "", string(privateKeyBytes), err
+	}
+
+	publicKeyBytes = pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: publicKeyBytes,
+	})
+
+	return string(privateKeyBytes), string(publicKeyBytes), nil
+
+}
 
