@@ -11,8 +11,7 @@ type MerchantService interface {
 	FindMerchantById(string) (*entities.Merchant, bool)
 	FindMerchantByPhone(string) (*entities.Merchant, bool)
 	GetAllMerchants()(*[]entities.Merchant,bool)
-	RetrivePublicKey(merchantId string) (string, bool)
-	// GetMerchant(entities.Merchant) *entities.Merchant
+	RetrivePublicKey(phone string) (string, bool)
 	GenerateKeyPair() (string, string, bool)
 	
 }
@@ -63,8 +62,8 @@ func (srvc MerchantServiceImpl) GetAllMerchants()(*[]entities.Merchant,bool){
 	return data, true
 }
 
-func (srvc MerchantServiceImpl) RetrivePublicKey(merchantId string) (string, bool){
-	key,err:= srvc.merchantRepo.RetrivePublicKey(merchantId)
+func (srvc MerchantServiceImpl) RetrivePublicKey(phone string) (string, bool){
+	key,err:= srvc.merchantRepo.RetrivePublicKey(phone)
 	if err!=nil{
 		return "",false
 	}

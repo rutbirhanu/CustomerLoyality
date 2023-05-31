@@ -6,11 +6,12 @@ import (
 )
 
 type UserService interface {
-	// CreateUser(entities.User) (*entities.User, bool)
+	CreateUser(entities.User) (*entities.User, bool)
 	FindUserById(string) (*entities.User, bool)
 	FindUserByPhone(string) (*entities.User, bool)
-	// AddMerchant(entities.Merchant, entities.User)(bool)
-	UserLogin(entities.UserLogin,string)(*entities.User,bool)
+	// UserLogin(entities.UserLogin,string)(*entities.User,bool)
+	GenerateKeyPair() (string, string, bool)
+	RetrivePublicKey(phone string) (string, bool)
 	
 }
 
@@ -25,16 +26,15 @@ func NewUserSrvc (userRepo repositories.UserRepo) UserService{
 	}
 }
 
-// func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User) (*entities.User, bool){
-// 	User, err := userSrvc.UserRepo.CreateUser(user)
-// 	if err!= nil{
-// 		return nil,false
-// 	}
+func (userSrvc  *UserSrvcImpl) CreateUser(user entities.User) (*entities.User, bool){
+	User, err := userSrvc.UserRepo.CreateUser(user)
+	if err!= nil{
+		return nil,false
+	}
 	
-// 	return User,true
+	return User,true
 
-// }
-
+}
 
 func (userSrvc  *UserSrvcImpl) FindUserById (userId string) (*entities.User, bool){
 	user,err:=userSrvc.UserRepo.FindUserById(userId)
@@ -54,19 +54,27 @@ func (userSrvc  *UserSrvcImpl) FindUserByPhone (phone string) (*entities.User, b
 }
 
 
-// func (userSrvc *UserSrvcImpl) AddMerchant(merchant entities.Merchant, user entities.User) (bool){
-// 	err:=userSrvc.UserRepo.AddMerchant(merchant, user)
+// func (userSrvc *UserSrvcImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User,bool){
+// 	merchant,err :=userSrvc.UserRepo.UserLogin(user,merchantId)
+
 // 	if err!=nil{
-// 		return false
+// 		return nil,false
 // 	}
-// 	return true
+// 	return merchant,true
 // }
 
-func (userSrvc *UserSrvcImpl) UserLogin(user entities.UserLogin, merchantId string) (*entities.User,bool){
-	merchant,err :=userSrvc.UserRepo.UserLogin(user,merchantId)
-
+func (userSrvc *UserSrvcImpl) RetrivePublicKey(phone string)(string, bool){
+	key, err:= userSrvc.UserRepo.RetrivePublicKey(phone)
 	if err!=nil{
-		return nil,false
+		return "", false
 	}
-	return merchant,true
+	return key,true
+}
+
+func (userSrvc *UserSrvcImpl) GenerateKeyPair()(string,string,bool){
+	private,public,err:= userSrvc.UserRepo.GenerateKeyPair()
+	if err!=nil{
+		return "","", false
+	}
+	return private,public,true
 }

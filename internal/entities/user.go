@@ -17,7 +17,8 @@ type User struct {
 }
 
 type UserLogin struct {
-	PhoneNumber string `json:"phonenumber"`
+	PhoneNumber string 		`json:"phonenumber"`
+	UserName 	string 		`json:"username"`
 }
 
 

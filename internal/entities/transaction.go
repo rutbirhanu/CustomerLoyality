@@ -11,9 +11,9 @@ type Transaction struct {
 
 type Collection struct {
 	Model
-	Points         float64 `json:"point"`
-	Reason         string  `json:"reason"`
-	UserMerchantId string  `gorm:"foreignkey"`
+	Points         float64 		`json:"point"`
+	UserPhone 		string 		`json:"phone"`
+	// UserMerchantId string  		`gorm:"foreignkey"`
 }
 
 var Organizations = []map[string]string{

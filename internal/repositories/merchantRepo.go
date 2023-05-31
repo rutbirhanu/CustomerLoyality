@@ -16,7 +16,7 @@ type MerchantRepo interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, error)
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
-	RetrivePublicKey(merchantId string) (string, error)
+	RetrivePublicKey(phone string) (string, error)
 	// GetMerchant(entities.Merchant) *entities.Merchant
 	GenerateKeyPair() (string, string, error)
 	UpdateMerchant(entities.Merchant) error
