@@ -10,7 +10,7 @@ type Merchant struct {
 	BusinessName string ` validate:" required , max=30"  json:"businessname" `
 	PrivateKey   string
 	PublicKey    string
-	Users        []*User `gorm:"many2many:merchant_users;"`
+	Users        []*User `gorm:"many2many:wallets;"`
 }
 
 

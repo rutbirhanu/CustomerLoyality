@@ -69,18 +69,20 @@ func GetWalletById(repo repositories.AdminRepo) echo.HandlerFunc{
 
 func Login(repo repositories.AdminRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user := entities.UserLogin{}
-		err := c.Bind(&user)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, "can not parse")
-		}
-		
-		// mer, uss, err := repo.AddMerchant(merchantId, userId)
+		// user := entities.UserLogin{}
+		// err := c.Bind(&user)
+		merchantId:=c.Param("merchantid")
+		userId:= c.Param("userid")
 		// if err != nil {
-		// 	return c.JSON(http.StatusBadRequest, err)
+		// 	return c.JSON(http.StatusBadRequest, "can not parse")
 		// }
-		// c.JSON(http.StatusAccepted, mer)
-		// c.JSON(http.StatusAccepted, uss)
+		
+		mer, uss, err := repo.AddMerchant(merchantId, userId)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		c.JSON(http.StatusAccepted, mer)
+		c.JSON(http.StatusAccepted, uss)
 
 		return nil
 	}

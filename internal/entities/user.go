@@ -10,7 +10,7 @@ type User struct {
 	Model
 	PhoneNumber string      `  json:"phonenumber" validate:"required"`
 	UserName    string      `json:"username" validate:"required"`
-	Merchants   []*Merchant `gorm:"many2many:merchant_users;"`
+	Merchants   []*Merchant `gorm:"many2many:wallets;"`
 	PrivateKey   string
 	PublicKey    string
 	// Transaction 	[]*Transaction
@@ -24,8 +24,8 @@ type UserLogin struct {
 
 type Wallet struct {
 	ID         		string		 `gorm:"primary_key;"`
-	MerchantID 		string		 `json:"merchantid"`
-	UserID 			string 		`json:"userid"`
+	MerchantID 		string		 `json:"merchantid" gorm:"foreignkey"`
+	UserID 			string 		`json:"userid" gorm:"foreignkey"`
 	Balance   		float64 	`json:"balance"`
 }
 
