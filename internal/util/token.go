@@ -23,6 +23,7 @@ type ClaimData struct {
 	UserId      string
 	jwt.StandardClaims
 	Role 		string
+	MerchantID 	string
 }
 
 
@@ -45,12 +46,13 @@ func VerifyPassword(userPass string, providedPass string) bool {
 }
 
 
-func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte, Role string) (string, error) {
+func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte, role string, merchantId string) (string, error) {
  tokenClaim:= & ClaimData{
 	PhoneNumber: phone,
 	UserId: uid,
 	Name: name,
-	Role: Role,
+	Role: role,
+	MerchantID: merchantId,
 	StandardClaims: jwt.StandardClaims{
 		ExpiresAt:time.Now().Add(time.Hour * time.Duration(5)).Unix(),
 	},

@@ -10,7 +10,7 @@ import (
 	"github.com/santimpay/customer-loyality/internal/repositories"
 )
 
-func Auth (repo repositories.MerchantRepo) func(echo.HandlerFunc) echo.HandlerFunc{
+func Auth (repo repositories.MerchantRepo) echo.MiddlewareFunc{
 	return func (next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context ) error{
 			tokenString,err := c.Cookie("auth-token")

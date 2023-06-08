@@ -5,8 +5,13 @@ type Transaction struct {
 	Amount         float64 `json:"amount"`
 	Type           string  `json:"type"`
 	Action         string  `json:"action"`
-	To             string  `json:"to"`
+	ReceiverID       string  `json:"receiver"`
 	UserMerchantID string  `gorm:"foreignkey"`
+}
+
+type TransferPoint struct{
+	Amount 		float64		`json:"amount"`
+	Phone		string 		`json:"phone"`
 }
 
 type Collection struct {
@@ -14,6 +19,10 @@ type Collection struct {
 	Points         float64 		`json:"point"`
 	UserPhone 		string 		`json:"phone"`
 	// UserMerchantId string  		`gorm:"foreignkey"`
+}
+
+type RequestData struct{
+	Amount 		float64 	`json:"amount"`
 }
 
 var Organizations = []map[string]string{

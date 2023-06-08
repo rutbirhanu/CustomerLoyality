@@ -55,26 +55,35 @@ func (db *AdminRepoImpl) AddMerchant(merchantId string, userId string) (*entitie
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// for _, m := range user.Merchants {
-	// 	if m.ID == merchant.ID {
-	// 		merchantExists = true
-	// 		break
-	// 	}
-	// }
-
-	// if !merchantExists {
-	// 	user.Merchants = append(user.Merchants, merchant)
-	// 	err = db.Db.Model(&user).Association("Merchants").Append(&merchant)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
 	if err != nil {
 		return nil, nil, err
 	}
+	userExists := false
+	for _, m := range merchant.Users {
+		if m.ID == user.ID {
+			userExists = true
+			break
+		}
+	}
+
+
+	// userMap := make(map[uint]struct{})
+	// for _, u := range merchant.Users {
+	// 	userMap[u.ID] = struct{}{}
+	// 	if u.ID == user.ID {
+	// 		userExists = true
+	// 		break
+	// 	}
+	// }
+
+
+
+	if userExists {
+		return merchant,user, nil
+	}
+
+	
 
 	merchant.Users = append(merchant.Users, user)
 
