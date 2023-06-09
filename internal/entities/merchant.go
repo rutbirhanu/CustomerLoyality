@@ -19,9 +19,14 @@ type CreatedMerchantResponse struct{
 	Password    	 string 	` validate:" required , max=30, min=6 "  json:"password" `
 	PhoneNumber 	 string 	`  validate:" required "  json:"phonenumber" `
 	BusinessName	 string 	` validate:" required , max=30"  json:"businessname" `
-	Users       	 []*User	 `gorm:"many2many:merchant_users;"`
+	Users       	 []*MerchantsUserResponse 
 
+}
 
+type UsersMerchantResponse struct{
+	Model
+	MerchantName 	string 		` validate:" required , max=30"  json:"name" `
+	BusinessName 	string 		` validate:" required , max=30"  json:"businessname" `
 }
 
 type MerchantLogin struct {

@@ -11,11 +11,12 @@ import (
 
 type TransactionRepo interface {
 	WithTrx(trxDB *gorm.DB) TransactionRepo
+	FindUserrr(userid string, merchantid string) (string, error)
 	FindSingleWallet(userId string, merchantId string) (*entities.Wallet, error)
 	PerformTransaction(amount float64, types string, recevierId string, userWalletID string) error
 	Donate(charityid string, userId string, merchantId string, amount float64) error
 	BuyAirTime(amount float64, userId string, merchantId string) error
-	TransferPoints(amount float64, userId string, merchantId string, to string) error
+	TransferPoints(amount float64, userId string, merchantId string, to string) (*entities.Wallet, error)
 }
 
 type TransactionRepoImpl struct {
@@ -56,7 +57,7 @@ func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, 
 		Amount:         amount,
 		Type:           types,
 		UserMerchantID: userWalletId,
-		ReceiverID: recevierId,
+		ReceiverID:     recevierId,
 	}
 
 	err := db.Db.Create(&transaction).Error
@@ -72,14 +73,11 @@ func (db *TransactionRepoImpl) Donate(charityid string, userId string, merchantI
 	var account string
 	var id string
 
-	// have to optimize this operation
-
 	for _, value := range entities.Organizations {
 		if charityid == value["id"] {
 			account = value["account"]
-			id=value["id"]
-		} else {
-			return errors.New("charity account not found")
+			id = value["id"]
+			break
 		}
 	}
 
@@ -92,12 +90,13 @@ func (db *TransactionRepoImpl) Donate(charityid string, userId string, merchantI
 		return errors.New("not enough balance")
 	}
 	fmt.Print(account)
-	
+
 	///and increase the charity balance
 
 	userWallet.Balance -= amount
-	err = db.PerformTransaction(amount,"donation",id,userWallet.ID)
-	if err!=nil{
+	db.Db.Save(&userWallet)
+	err = db.PerformTransaction(amount, "donation", id, userWallet.ID)
+	if err != nil {
 		return err
 	}
 
@@ -117,44 +116,61 @@ func (db *TransactionRepoImpl) BuyAirTime(amount float64, userId string, merchan
 
 	// call the air time api
 
-	err = db.PerformTransaction(amount,"air time","",userWallet.ID)
-	if err!=nil{
+	err = db.PerformTransaction(amount, "air time", "", userWallet.ID)
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (db *TransactionRepoImpl) TransferPoints(amount float64, userId string, merchantId string, toPhoneNumber string) error {
+func (db *TransactionRepoImpl) TransferPoints(amount float64, userId string, merchantId string, toPhoneNumber string) (*entities.Wallet, error) {
+	var recevierId string
 	userWallet, err := db.FindSingleWallet(userId, merchantId)
 	if err != nil {
-		return nil
+		return userWallet, err
 	}
 	if userWallet.Balance < amount {
-		return errors.New("amount not sufficient")
+		return userWallet, errors.New("amount not sufficient")
+	}
+	merchant := entities.Merchant{}
+	err = db.Db.Model(&entities.Merchant{}).Preload("Users", "phone_number=?", toPhoneNumber).Where("id=?", merchantId).First(&merchant).Error
+	if err != nil {
+		return userWallet, errors.New("receiver user not found ")
 	}
 
-	toUser := &entities.User{}
-	err = db.Db.Model(&entities.Merchant{}).Where("id = ?", merchantId).
-		Preload("Users", "phone_number = ?", toPhoneNumber).
-		First(&toUser).
-		Error
-	if err != nil {
-		return errors.New("receiver user not found ")
+	for _, user := range merchant.Users {
+		recevierId = user.ID
 	}
 
 	receiverWallet := entities.Wallet{}
-	err = db.Db.Model(&entities.Wallet{}).Where("user_id=? AND merchant_id=?", userId, merchantId).First(&receiverWallet).Error
+	err = db.Db.Model(&entities.Wallet{}).Where("user_id=? AND merchant_id=?", recevierId, merchantId).First(&receiverWallet).Error
 	if err != nil {
-		return err
+		return userWallet, err
 	}
-	userWallet.Balance-=amount
-	receiverWallet.Balance+=amount
-
-	err = db.PerformTransaction(amount,"point transfer",receiverWallet.ID,userWallet.ID)
-	if err!=nil{
-		return err
+	userWallet.Balance -= amount
+	receiverWallet.Balance += amount
+	db.Db.Save(&userWallet)
+	db.Db.Save(&receiverWallet)
+	err = db.PerformTransaction(amount, "point transfer", receiverWallet.ID, userWallet.ID)
+	if err != nil {
+		return userWallet, err
 	}
 
-	return nil
+	return userWallet, nil
+}
+
+func (db *TransactionRepoImpl) FindUserrr(userid string, merchantid string) (string, error) {
+	var useridd string
+	merchant := entities.Merchant{}
+	err := db.Db.Model(&entities.Merchant{}).Preload("Users", "id=?", userid).Where("id=?", merchantid).First(&merchant).Error
+	if err != nil {
+		return "", err
+	}
+	for _, users := range merchant.Users {
+		// Access the fields of the user model here
+		useridd = users.ID
+		fmt.Println(users)
+	}
+	return useridd, nil
 }

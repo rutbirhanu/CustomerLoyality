@@ -18,12 +18,12 @@ const (
 
 
 type ClaimData struct {
-	PhoneNumber string
-	Name        string
-	UserId      string
+	PhoneNumber 	string
+	Name        	string
+	UserId      	string
 	jwt.StandardClaims
-	Role 		string
-	MerchantID 	string
+	Role 			Role
+	MerchantID 		string		`json:"merchantid,omitempty"`
 }
 
 
@@ -46,7 +46,7 @@ func VerifyPassword(userPass string, providedPass string) bool {
 }
 
 
-func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte, role string, merchantId string) (string, error) {
+func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte, role Role, merchantId string) (string, error) {
  tokenClaim:= & ClaimData{
 	PhoneNumber: phone,
 	UserId: uid,

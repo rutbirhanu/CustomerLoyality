@@ -20,17 +20,17 @@ func Connect(config *configs.DbConfig) (*gorm.DB, error) {
 	if err = db.AutoMigrate(&entities.Merchant{},
 		&entities.User{},
 		&entities.Wallet{},
-		
+		&entities.Transaction{},
 	); err != nil {
 		return nil, err
 	}
 
-	err= db.SetupJoinTable(&entities.User{}, "Merchants", &entities.Wallet{})
+	err = db.SetupJoinTable(&entities.User{}, "Merchants", &entities.Wallet{})
 	if err != nil {
 		return nil, err
 	}
-	
-	err= db.SetupJoinTable(&entities.Merchant{}, "Users", &entities.Wallet{})
+
+	err = db.SetupJoinTable(&entities.Merchant{}, "Users", &entities.Wallet{})
 	if err != nil {
 		return nil, err
 	}

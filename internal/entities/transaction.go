@@ -4,8 +4,7 @@ type Transaction struct {
 	Model
 	Amount         float64 `json:"amount"`
 	Type           string  `json:"type"`
-	Action         string  `json:"action"`
-	ReceiverID       string  `json:"receiver"`
+	ReceiverID      string  `json:"receiver,omitempty"`
 	UserMerchantID string  `gorm:"foreignkey"`
 }
 
