@@ -60,8 +60,6 @@ func Donate(repo repositories.TransactionRepo) echo.HandlerFunc {
 		txRepo := repo.WithTrx(tx_handler.(*gorm.DB))
 		amount := entities.RequestData{}
 		err := c.Bind(&amount)
-		c.JSON(http.StatusAccepted, charityId)
-
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
@@ -73,7 +71,7 @@ func Donate(repo repositories.TransactionRepo) echo.HandlerFunc {
 		}
 	
 
-		return nil
+		return c.JSON(http.StatusAccepted,"success")
 	}
 }
 
