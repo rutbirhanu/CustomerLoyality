@@ -8,7 +8,9 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/configs"
+
 	"github.com/santimpay/customer-loyality/internal/db_utils"
+	// "github.com/santimpay/customer-loyality/internal/util"
 
 	"github.com/santimpay/customer-loyality/internal/handlers"
 	"github.com/santimpay/customer-loyality/internal/handlers/auth"
@@ -50,8 +52,11 @@ func main() {
 	app := echo.New()
 
 	trxRoute := app.Group("/trx")
-	trxRoute.Use(middleware.DBTransactionMiddlware(db))
-	trxRoute.POST("/:merchantid", handlers.PointCollection(adminRepo))
+	// authRoute:= app.Group("/auth")
+	// authRoute.
+	trxRoute.Use(middleware.Auth(merchantRepo))
+	// trxRoute.Use(middleware.DBTransactionMiddlware(db))
+	trxRoute.POST("/:merchantid/collect", handlers.PointCollection(adminRepo))
 	trxRoute.POST("/:merchantid/:userid", handlers.TransferPoint(trxRepo))
 	trxRoute.POST("/:merchantid/charity/:userid", handlers.Donate(trxRepo))
 

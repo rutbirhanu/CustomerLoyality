@@ -11,6 +11,7 @@ type User struct {
 	PhoneNumber string      `  json:"phonenumber" validate:"required"`
 	UserName    string      `json:"username" validate:"required"`
 	Merchants   []*Merchant `gorm:"many2many:wallets;"`
+	Token		string 			`json:"token"`
 	PrivateKey   string
 	PublicKey    string
 }
@@ -24,6 +25,7 @@ type MerchantsUserResponse struct{
 type UserLogin struct {
 	PhoneNumber string 		`json:"phonenumber"`
 	UserName 	string 		`json:"username"`
+	Token		string 			`json:"token"`
 }
 
 type CreatedUserResponse struct{
