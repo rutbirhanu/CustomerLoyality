@@ -3,65 +3,44 @@ package handlers
 import (
 	"net/http"
 
-	// "github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"github.com/santimpay/customer-loyality/internal/repositories"
 	"github.com/santimpay/customer-loyality/internal/service"
+	"github.com/santimpay/customer-loyality/internal/util"
 )
 
-func RegisterUser(userSrvc service.UserService, repo repositories.UserRepo) echo.HandlerFunc {
+
+func GetUserById(srvc service.UserService) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user := entities.User{}
-		merchantId:=c.Param("merchantid")
-		err := c.Bind(&user)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, "can not parse data")
+		id := c.Param("userid")
+		user, found := srvc.FindUserById(id)
+		if !found {
+			return c.JSON(http.StatusNotFound, " user not found")
 		}
-
-		registered, _ := userSrvc.FindUserByPhone(user.PhoneNumber)
-		// for 
-		// registered.Merchants
-		if registered != nil  {
-			return c.JSON(http.StatusBadRequest, "already created phone")
-
-		}
-		// if !found {
-		// 	return c.JSON(http.StatusBadRequest, "not found")
-		// }
-
-		userData,err := repo.CreateUser(user, merchantId)
-		if err!=nil {
-			return c.JSON(http.StatusBadRequest,err)
-		}
-
-		c.JSON(http.StatusCreated, userData)
-
+		c.JSON(http.StatusAccepted, user)
 		return nil
-
 	}
 }
 
-func Login(repo repositories.UserRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
+func GetWalletById(repo repositories.AdminRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user:= entities.User{}
-		err := c.Bind(&user)
+		id := c.Param("Walletid")
+		Wallet, err := repo.FindWalletById(id)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, "can not parse")
+			return c.JSON(http.StatusBadRequest, err)
 		}
+		return c.JSON(http.StatusAccepted, Wallet)
+	}
+}
+
+func Login(repo repositories.AdminRepo, srvc service.UserService, merRepo repositories.MerchantRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+
 		merchantId := c.Param("merchantid")
-
-		// Merchant, err := merRepo.FindMerchantById(merchantId)
-		// if err != nil {
-		// 	return c.JSON(http.StatusBadRequest, "merchant not found")
-		// }
-
-		// _, found := srvc.FindUserById(userId)
-		// if found {
-		// 	return c.JSON(http.StatusBadRequest, "user with phone number already exist")
-		// }
-
-		mer, uss, err := repo.AddMerchant(merchantId, user)
+		userId := c.Param("userid")
+		
+		mer, uss, err := repo.AddUserToMerchant(merchantId, userId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
@@ -72,40 +51,41 @@ func Login(repo repositories.UserRepo, srvc service.UserService, merRepo reposit
 	}
 }
 
-// func Login(repo repositories.UserMerchantRepo, usrepo repositories.UserRepo) echo.HandlerFunc {
-// 	return func(c echo.Context) error {
-
-// 		user := entities.UserLogin{}
-// 		err:=c.Bind(&user)
-
-// 		// validate := validator.New()
-// 		// err = validate.Struct(user)
-// 		// validationErrors := err.(validator.ValidationErrors)
-// 		if err != nil {
-// 			return c.JSON(http.StatusBadRequest, err)
-// 		}
-
-// 		merchantId := c.Param("merchantid")
-
-// 		mer, uss, err := repo.AddMerchant(merchantId, user.PhoneNumber)
-// 		if err != nil {
-// 			return c.JSON(http.StatusBadRequest, err)
-// 		}
-// 		c.JSON(http.StatusAccepted, mer)
-// 		c.JSON(http.StatusAccepted, uss)
-
-// 		return nil
-// 	}
-// }
-
-func GetUserById(srvc service.UserService) echo.HandlerFunc {
+func Loginn(repo repositories.UserRepo, srvc service.UserService, adminRepo repositories.AdminRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		id := c.Param("userid")
-		user, found := srvc.FindUserById(id)
-		if !found {
-			return c.JSON(http.StatusNotFound, " user not found")
+		data := entities.UserLogin{}
+		err := c.Bind(&data)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
-		c.JSON(http.StatusAccepted, user)
+		merchantId := c.Param("merchantid")
+
+		user, err := repo.FindUserByPhone(data.PhoneNumber)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "incorrect input ")
+		}
+
+		private, _, err := repo.GenerateKeyPair()
+		if err != nil {
+			c.JSON(http.StatusBadGateway, err)
+		}
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.UserName, []byte(private), util.User, merchantId)
+		if err != nil {
+			return c.JSON(http.StatusConflict, "can not create token")
+		}
+		user.Token = token
+		data.Token = token
+
+		cookie := &http.Cookie{
+			Name:  "auth-token",
+			Value: token,
+		}
+		cookie.SameSite = http.SameSiteLaxMode
+		cookie.HttpOnly = true
+		c.SetCookie(cookie)
+
+		c.JSON(http.StatusAccepted, private)
+		c.JSON(http.StatusAccepted, data)
 		return nil
 	}
 }

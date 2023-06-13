@@ -2,15 +2,28 @@ package entities
 
 type Merchant struct {
 	Model
-	MerchantName 	string	 ` validate:" required , max=30"  json:"name" `
-	Password     	string	 ` validate:" required , max=30, min=6 "  json:"password" `
-	PhoneNumber  	string	 ` validate:" required "  json:"phonenumber" `
-	Token        	string	 `json:"token"`
-	BusinessName 	string	 ` validate:" required , max=30"  json:"businessname" `
-	PrivateKey   	string	
-	PublicKey    	string	
-	Users        	[]*User   `gorm:"many2many:merchant_users;"`
+	MerchantName string ` validate:" required , max=30"  json:"name" `
+	Password     string ` validate:" required , max=30, min=6 "  json:"password" `
+	PhoneNumber  string `  validate:" required "  json:"phonenumber" `
+	Token        string `json:"token"`
+	BusinessName string ` validate:" required , max=30"  json:"businessname" `
+	PrivateKey   string
+	PublicKey    string
+	Users        []*User `gorm:"many2many:wallets;"`
+}
 
+type CreatedMerchantResponse struct {
+	MerchantName string ` validate:" required , max=30"  json:"name" `
+	Password     string ` validate:" required , max=30, min=6 "  json:"password" `
+	PhoneNumber  string `  validate:" required "  json:"phonenumber" `
+	BusinessName string ` validate:" required , max=30"  json:"businessname" `
+	Users        []*MerchantsUserResponse
+}
+
+type UsersMerchantResponse struct {
+	Model
+	MerchantName string ` validate:" required , max=30"  json:"name" `
+	BusinessName string ` validate:" required , max=30"  json:"businessname" `
 }
 
 type MerchantLogin struct {
@@ -28,12 +41,4 @@ type GetAllUsers struct {
 	Prev     int64
 	Next     int64
 	LastPage int64
-}
-
-type MerchantUsers struct {
-	Model
-	MerchantID string   `gorm:"foreignKey" json:"merchantid"`
-	// Merchant   Merchant `json:"merchant"`
-	UserID     string   `gorm:"foreignKey"  json:"userid"`
-	// User       User     `json:"user"`
 }

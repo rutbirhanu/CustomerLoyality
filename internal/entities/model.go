@@ -2,16 +2,15 @@ package entities
 
 import (
 	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Model struct {
-	ID        	string   			`gorm:"primary_key" json:"id"`
-	CreatedAt 	string			` gorm:" not null" json:"created_at"`
-	UpdatedAt 	string			` gorm:" not null" json:"updated_at"`
-	DeletedAt 	gorm.DeletedAt	 `gorm:"index" json:"deleted_at"`
+	ID        		string   			`gorm:"primary_key" json:"id"`
+	CreatedAt 		string				`json:"created_at"`
+	UpdatedAt 		string				`json:"updated_at"`
+	DeletedAt 		gorm.DeletedAt	 	`gorm:"index" json:"deleted_at"`
 }
 
 func (model *Model) BeforeCreate(scope *gorm.DB) error {

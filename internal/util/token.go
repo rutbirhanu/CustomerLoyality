@@ -8,12 +8,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Role string
+
+const (
+	Admin  		Role="admin"
+	User 		Role="user"
+	Merchant	Role="merchant"
+)
+
+
 type ClaimData struct {
-	PhoneNumber string
-	Name        string
-	UserId      string
+	PhoneNumber 	string
+	Name        	string
+	UserId      	string
 	jwt.StandardClaims
+	Role 			Role
+	MerchantID 		string		`json:"merchantid,omitempty"`
 }
+
 
 func HashPassword(password string) string {
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -31,14 +43,16 @@ func VerifyPassword(userPass string, providedPass string) bool {
 		return false
 	}
 	return true
-
 }
 
-func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte) (string, error) {
+
+func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte, role Role, merchantId string) (string, error) {
  tokenClaim:= & ClaimData{
 	PhoneNumber: phone,
 	UserId: uid,
 	Name: name,
+	Role: role,
+	MerchantID: merchantId,
 	StandardClaims: jwt.StandardClaims{
 		ExpiresAt:time.Now().Add(time.Hour * time.Duration(5)).Unix(),
 	},
@@ -49,26 +63,6 @@ func GenerateToken(phone string, uid string, name string, privateKeyBytes []byte
 	    return "", err
 	}
 
-// 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-// 	tokenString, err := token.SignedString(privateKey)
-// 	if err != nil {
-// 	    return "", err
-// 	}
-
-// 	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKeyBytes)
-// 	if err != nil {
-// 	    return nil, err
-// 	}
-
-// 	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
-// 	    return publicKey, nil
-// 	})
-
-// 	if err != nil {
-// 	    return nil, err
-// 	}
-
-// 	claims, ok := token.Claims.(jwt.MapClaims)
 	
  token, err:=jwt.NewWithClaims( jwt.SigningMethodRS256, tokenClaim).SignedString(privateKey)
  if err!=nil{

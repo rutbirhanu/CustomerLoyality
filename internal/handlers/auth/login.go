@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"github.com/santimpay/customer-loyality/internal/repositories"
@@ -28,7 +29,8 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if err!=nil{
 			c.JSON(http.StatusBadGateway,err)
 		}
-		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private))
+		merchant:= util.Merchant
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private),merchant,user.ID)
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}
@@ -42,9 +44,9 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		cookie.SameSite=http.SameSiteLaxMode
 		cookie.HttpOnly=true
 		c.SetCookie(cookie)
+		c.Set("merchantID",user.ID)
 
 		
-		// c.JSON(http.StatusAccepted, privateKey)
 		c.JSON(http.StatusAccepted,data)
 		return nil
 	}

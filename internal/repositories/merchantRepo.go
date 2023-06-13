@@ -16,36 +16,84 @@ type MerchantRepo interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, error)
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
-	RetrivePublicKey(merchantId string)(string,error)
-	// GetMerchant(entities.Merchant) *entities.Merchant
+	RetrivePublicKey(phone string) (string, error)
 	GenerateKeyPair() (string, string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
-	DeleteAll() error
+	CreateUser(entities.User, string) (*entities.User, error)
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 }
 
 type MerchantRepoImpl struct {
-	Db *gorm.DB
-	// userRepo UserRepo
+	Db              *gorm.DB
+	UserRepo        UserRepo
 }
 
-func NewMerchantRepo(db *gorm.DB) MerchantRepo {
+func NewMerchantRepo(db *gorm.DB, userRepo UserRepo) MerchantRepo {
 	return &MerchantRepoImpl{
-		Db: db,
-		// userRepo: UserRepo,
+		Db:              db,
+		UserRepo:        userRepo,
 	}
 }
 
-// func (db MerchantRepoImpl) GetMerchant(merchant entities.Merchant) *entities.Merchant {
-// 	return &entities.Merchant{
-// 		PhoneNumber:  merchant.PhoneNumber,
-// 		Password:     merchant.Password,
-// 		MerchantName: merchant.MerchantName,
-// 		BusinessName: merchant.BusinessName,
-// 	}
+func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
 
-// }
+	user, err := db.UserRepo.FindUserById(userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	merchant, err := db.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, nil, err
+	}
+	userExists := false
+	for _, m := range merchant.Users {
+		if m.ID == user.ID {
+			userExists = true
+			break
+		}
+	}
+
+	if userExists {
+		return merchant, user, nil
+	}
+
+	merchant.Users = append(merchant.Users, user)
+
+	newWallet := entities.Wallet{
+		UserID:     user.ID,
+		MerchantID: merchant.ID,
+	}
+	err = db.Db.Create(&newWallet).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return merchant, user, nil
+
+}
+
+func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
+	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
+	if err == nil {
+		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
+		if err != nil {
+			return nil, err
+		}
+		return User, nil
+	}
+
+	err = db.Db.Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	_, _, err = db.AddUserToMerchant(merchantId, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
 
 func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 
@@ -99,19 +147,18 @@ func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
 func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, error) {
 	var merchant entities.Merchant
 
-	err := db.Db.Find(&merchant, "id=?", id).Error
-
-
+	err := db.Db.Preload("Users").Where("id=?", id).Take(&merchant).Error
 	if err != nil {
 		return nil, err
 	}
 	return &merchant, nil
+
 }
 
 func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchant, error) {
 	merchant := entities.Merchant{}
 
-	err := db.Db.Where("phone_number=?", phone).Take(&merchant).Error
+	err := db.Db.Preload("Users").Where("phone_number=?", phone).Take(&merchant).Error
 	if err != nil {
 		return nil, err
 	}
@@ -119,33 +166,14 @@ func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchan
 
 }
 
-func (db MerchantRepoImpl) RetrivePublicKey(phone string)(string,error){
-	merchant,err:= db.FindMerchantByPhone(phone)
-	if err!=nil{
-		return "",err
+func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
+	merchant, err := db.FindMerchantByPhone(phone)
+	if err != nil {
+		return "", err
 	}
 	publicKey := merchant.PublicKey
 	return publicKey, nil
 }
-
-// func (db *MerchantRepoImpl) AddUser(userId string, merchantId string) error {
-// 	merchant, err := db.FindMerchantById(merchantId)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	user, err := db.userRepo.FindUserById(userId)
-
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if err := db.Db.Model(&merchant).Association("Users").Append(user); err != nil {
-// 		return err
-// 	}
-// 	if err := db.Db.Model(&user).Association("Users").Append(merchant); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {
 
