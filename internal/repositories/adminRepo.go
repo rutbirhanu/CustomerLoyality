@@ -13,8 +13,7 @@ type AdminRepo interface {
 	// DeleteMerchant(string) (*entities.Merchant,error)
 	WithTrx(*gorm.DB) AdminRepo
 	FindWalletById(string) (*entities.Wallet, error)
-	AddMerchant(string, string) (*entities.Merchant, *entities.User, error)
-	PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error)
+	AddUserToMerchant(string, string) (*entities.Merchant, *entities.User, error)
 }
 
 type AdminRepoImpl struct {
@@ -49,7 +48,7 @@ func (db *AdminRepoImpl) FindWalletById(id string) (*entities.Wallet, error) {
 	return &userMerchant, nil
 }
 
-func (db *AdminRepoImpl) AddMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
+func (db *AdminRepoImpl) AddUserToMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
 
 	user, err := db.userRepo.FindUserById(userId)
 	if err != nil {
@@ -77,14 +76,10 @@ func (db *AdminRepoImpl) AddMerchant(merchantId string, userId string) (*entitie
 	// 	}
 	// }
 
-
-
 	if userExists {
 		return merchant,user, nil
 	}
-
 	
-
 	merchant.Users = append(merchant.Users, user)
 
 	newWallet := entities.Wallet{
@@ -98,31 +93,5 @@ func (db *AdminRepoImpl) AddMerchant(merchantId string, userId string) (*entitie
 	}
 
 	return merchant, user, nil
-
-}
-
-func (db *AdminRepoImpl) PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error) {
-	user, err := db.userRepo.FindUserByPhone(userPhone)
-	if err != nil {
-		return nil, err
-	}
-	merchant, err := db.merchantRepo.FindMerchantById(merchantId)
-	if err != nil {
-		return nil, err
-	}
-
-	userWallet := entities.Wallet{}
-
-	result := db.Db.Table("wallets").
-		Where("user_id = ? AND merchant_id = ?", user.ID, merchant.ID).
-		Find(&userWallet)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	userWallet.Balance += point
-	db.Db.Save(userWallet)
-	return &userWallet, nil
 
 }

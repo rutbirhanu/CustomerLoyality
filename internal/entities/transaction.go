@@ -4,6 +4,7 @@ type Transaction struct {
 	Model
 	Amount         float64 `json:"amount"`
 	Type           string  `json:"type"`
+	Action 			string 		`json:"action"`
 	ReceiverID      string  `json:"receiver,omitempty"`
 	UserMerchantID string  `gorm:"foreignkey"`
 }
@@ -14,7 +15,6 @@ type TransferPoint struct{
 }
 
 type Collection struct {
-	Model
 	Points         float64 		`json:"point"`
 	UserPhone 		string 		`json:"phone"`
 	// UserMerchantId string  		`gorm:"foreignkey"`

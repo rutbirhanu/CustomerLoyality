@@ -17,36 +17,116 @@ type MerchantRepo interface {
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
 	RetrivePublicKey(phone string) (string, error)
-	// GetMerchant(entities.Merchant) *entities.Merchant
+	PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error)
+
 	GenerateKeyPair() (string, string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
 	DeleteAll() error
+	CreateUser(entities.User, string) (*entities.User, error)
+
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 	// UpdataUserPoints(string , float64) error
 }
 
 type MerchantRepoImpl struct {
-	Db *gorm.DB
-	// userRepo UserRepo
+	Db              *gorm.DB
+	UserRepo        UserRepo
+	TransactionRepo TransactionRepo
 }
 
-func NewMerchantRepo(db *gorm.DB) MerchantRepo {
+func NewMerchantRepo(db *gorm.DB, userRepo UserRepo, trxRepo TransactionRepo) MerchantRepo {
 	return &MerchantRepoImpl{
-		Db: db,
-		// userRepo: UserRepo,
+		Db:              db,
+		UserRepo:        userRepo,
+		TransactionRepo: trxRepo,
 	}
 }
 
-// func (db MerchantRepoImpl) GetMerchant(merchant entities.Merchant) *entities.Merchant {
-// 	return &entities.Merchant{
-// 		PhoneNumber:  merchant.PhoneNumber,
-// 		Password:     merchant.Password,
-// 		MerchantName: merchant.MerchantName,
-// 		BusinessName: merchant.BusinessName,
-// 	}
+func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error) {
 
-// }
+	user, err := db.UserRepo.FindUserById(userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	merchant, err := db.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, nil, err
+	}
+	userExists := false
+	for _, m := range merchant.Users {
+		if m.ID == user.ID {
+			userExists = true
+			break
+		}
+	}
+
+	if userExists {
+		return merchant, user, nil
+	}
+
+	merchant.Users = append(merchant.Users, user)
+
+	newWallet := entities.Wallet{
+		UserID:     user.ID,
+		MerchantID: merchant.ID,
+	}
+	err = db.Db.Create(&newWallet).Error
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return merchant, user, nil
+
+}
+
+func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
+	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
+	if err == nil {
+		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
+		if err != nil {
+			return nil, err
+		}
+		return User, nil
+	}
+
+	err = db.Db.Create(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	_, _, err = db.AddUserToMerchant(merchantId, user.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (db *MerchantRepoImpl) PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error) {
+	user, err := db.UserRepo.FindUserByPhone(userPhone)
+	if err != nil {
+		return nil, err
+	}
+	merchant, err := db.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, err
+	}
+
+	userWallet := entities.Wallet{}
+
+	result := db.Db.Table("wallets").
+		Where("user_id = ? AND merchant_id = ?", user.ID, merchant.ID).
+		Find(&userWallet)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	userWallet.Balance += point
+	db.Db.Save(userWallet)
+	return &userWallet, nil
+
+}
 
 func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 
@@ -105,7 +185,7 @@ func (db *MerchantRepoImpl) FindMerchantById(id string) (*entities.Merchant, err
 		return nil, err
 	}
 	return &merchant, nil
-	
+
 }
 
 func (db *MerchantRepoImpl) FindMerchantByPhone(phone string) (*entities.Merchant, error) {
@@ -127,7 +207,6 @@ func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
 	publicKey := merchant.PublicKey
 	return publicKey, nil
 }
-
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {
 

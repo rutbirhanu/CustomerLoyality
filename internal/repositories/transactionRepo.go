@@ -11,9 +11,9 @@ import (
 
 type TransactionRepo interface {
 	WithTrx(trxDB *gorm.DB) TransactionRepo
-	FindUserrr(userid string, merchantid string) (string, error)
+	// FindUserrr(userid string, merchantid string) (string, error)
 	FindSingleWallet(userId string, merchantId string) (*entities.Wallet, error)
-	PerformTransaction(amount float64, types string, recevierId string, userWalletID string) error
+	PerformTransaction(amount float64, types string, recevierId string, userWalletID string, action string) error
 	Donate(charityid string, userId string, merchantId string, amount float64) error
 	BuyAirTime(amount float64, userId string, merchantId string) error
 	TransferPoints(amount float64, userId string, merchantId string, to string) (*entities.Wallet, error)
@@ -51,11 +51,12 @@ func (db *TransactionRepoImpl) FindSingleWallet(userId string, merchantId string
 
 }
 
-func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, recevierId string, userWalletId string) error {
+func (db *TransactionRepoImpl) PerformTransaction(amount float64, types string, recevierId string, userWalletId string, action string) error {
 
 	transaction := entities.Transaction{
 		Amount:         amount,
 		Type:           types,
+		Action: 		action ,	
 		UserMerchantID: userWalletId,
 		ReceiverID:     recevierId,
 	}
@@ -95,7 +96,7 @@ func (db *TransactionRepoImpl) Donate(charityid string, userId string, merchantI
 
 	userWallet.Balance -= amount
 	db.Db.Save(&userWallet)
-	err = db.PerformTransaction(amount, "donation", id, userWallet.ID)
+	err = db.PerformTransaction(amount, "donation", id, userWallet.ID,"debit")
 	if err != nil {
 		return err
 	}
@@ -116,7 +117,7 @@ func (db *TransactionRepoImpl) BuyAirTime(amount float64, userId string, merchan
 
 	// call the air time api
 
-	err = db.PerformTransaction(amount, "air time", "", userWallet.ID)
+	err = db.PerformTransaction(amount, "air time", "", userWallet.ID,"debit")
 	if err != nil {
 		return err
 	}
@@ -152,7 +153,7 @@ func (db *TransactionRepoImpl) TransferPoints(amount float64, userId string, mer
 	receiverWallet.Balance += amount
 	db.Db.Save(&userWallet)
 	db.Db.Save(&receiverWallet)
-	err = db.PerformTransaction(amount, "point transfer", receiverWallet.ID, userWallet.ID)
+	err = db.PerformTransaction(amount, "point transfer", receiverWallet.ID, userWallet.ID,"debit")
 	if err != nil {
 		return userWallet, err
 	}
@@ -160,17 +161,17 @@ func (db *TransactionRepoImpl) TransferPoints(amount float64, userId string, mer
 	return userWallet, nil
 }
 
-func (db *TransactionRepoImpl) FindUserrr(userid string, merchantid string) (string, error) {
-	var useridd string
-	merchant := entities.Merchant{}
-	err := db.Db.Model(&entities.Merchant{}).Preload("Users", "id=?", userid).Where("id=?", merchantid).First(&merchant).Error
-	if err != nil {
-		return "", err
-	}
-	for _, users := range merchant.Users {
-		// Access the fields of the user model here
-		useridd = users.ID
-		fmt.Println(users)
-	}
-	return useridd, nil
-}
+// func (db *TransactionRepoImpl) FindUserrr(userid string, merchantid string) (string, error) {
+// 	var useridd string
+// 	merchant := entities.Merchant{}
+// 	err := db.Db.Model(&entities.Merchant{}).Preload("Users", "id=?", userid).Where("id=?", merchantid).First(&merchant).Error
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	for _, users := range merchant.Users {
+// 		// Access the fields of the user model here
+// 		useridd = users.ID
+// 		fmt.Println(users)
+// 	}
+// 	return useridd, nil
+// }

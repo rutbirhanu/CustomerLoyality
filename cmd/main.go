@@ -39,12 +39,12 @@ func main() {
 		log.Fatal(err)
 	}
 	// var merchantRepo repositories.MerchantRepo
-	merchantRepo := repositories.NewMerchantRepo(db)
-	userRepo := repositories.NewUserRepo(db, merchantRepo)
+	userRepo := repositories.NewUserRepo(db)
+	trxRepo := repositories.NewTransactionRepo(db, userRepo)
+	merchantRepo := repositories.NewMerchantRepo(db,userRepo, trxRepo)
 	adminRepo := repositories.NewAdminRepo(db, userRepo, merchantRepo)
 	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
-	trxRepo := repositories.NewTransactionRepo(db, userRepo)
 
 	// merchantRoute:= app.Group("/merchant")
 	// userRoute:= app.Group("/user")
@@ -70,7 +70,7 @@ func main() {
 	app.POST("/addMerchant/:merchantid/:userid", handlers.Login(adminRepo, userSrvc, merchantRepo))
 	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
 	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
-	app.POST("/createUser", handlers.RegisterUser(userSrvc, userRepo))
+	app.POST("/createUser", handlers.RegisterUser(merchantRepo))
 	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
