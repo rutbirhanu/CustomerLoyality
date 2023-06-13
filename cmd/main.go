@@ -38,40 +38,46 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// var merchantRepo repositories.MerchantRepo
+
 	userRepo := repositories.NewUserRepo(db)
-	trxRepo := repositories.NewTransactionRepo(db, userRepo)
-	merchantRepo := repositories.NewMerchantRepo(db,userRepo, trxRepo)
+	merchantRepo := repositories.NewMerchantRepo(db,userRepo)
+	trxRepo := repositories.NewTransactionRepo(db, userRepo,merchantRepo)
 	adminRepo := repositories.NewAdminRepo(db, userRepo, merchantRepo)
 	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
 
-	// merchantRoute:= app.Group("/merchant")
-	// userRoute:= app.Group("/user")
-	// adminRoute:=app.Group("/admin")
 	app := echo.New()
 
+
 	trxRoute := app.Group("/trx")
-	// authRoute:= app.Group("/auth")
-	// authRoute.
 	trxRoute.Use(middleware.Auth(merchantRepo))
 	// trxRoute.Use(middleware.DBTransactionMiddlware(db))
-	trxRoute.POST("/:merchantid/collect", handlers.PointCollection(adminRepo))
+	trxRoute.POST("/:merchantid/collect", handlers.PointCollection(trxRepo))
 	trxRoute.POST("/:merchantid/:userid", handlers.TransferPoint(trxRepo))
 	trxRoute.POST("/:merchantid/charity/:userid", handlers.Donate(trxRepo))
+	trxRoute.GET("/find/:merchantid/:userid", handlers.FindUserMer(trxRepo))
 
-	app.GET("/find/:merchantid/:userid", handlers.FindUserMer(trxRepo))
 
-	app.GET("/allMerchant", handlers.GetAll(merchantSrvc))
-	app.GET("/getUser/:userid", handlers.GetUserById(userSrvc))
-	app.GET("/getWallet/:Walletid", handlers.GetWalletById(adminRepo))
+	
+	merchantRoute:=app.Group("/merchant")
+	merchantRoute.Use(middleware.Auth(merchantRepo))
+	merchantRoute.GET("/getMerchant/:merchantid", handlers.FindMerchantById(merchantSrvc))
+	merchantRoute.POST("/addMerchant/:merchantid/:userid", handlers.Login(adminRepo, userSrvc, merchantRepo))
+	merchantRoute.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
+	merchantRoute.POST("/login", auth.Login(merchantSrvc, merchantRepo))
+	merchantRoute.POST("/createUser", handlers.RegisterUser(merchantRepo))
+	merchantRoute.GET("/allMerchant", handlers.GetAll(merchantSrvc))
 
-	app.GET("/getMerchant/:merchantid", handlers.FindMerchantById(merchantSrvc))
-	app.POST("/addMerchant/:merchantid/:userid", handlers.Login(adminRepo, userSrvc, merchantRepo))
-	app.POST("/signup", auth.Signup(merchantSrvc, merchantRepo))
-	app.POST("/login", auth.Login(merchantSrvc, merchantRepo))
-	app.POST("/createUser", handlers.RegisterUser(merchantRepo))
-	app.DELETE("/delMerchants", handlers.DeleteAll(merchantRepo))
+
+	userRoute:= app.Group("/user")
+	userRoute.GET("/getUser/:userid", handlers.GetUserById(userSrvc))
+
+
+	adminRoute :=app.Group("/admin")
+	adminRoute.GET("/getWallet/:Walletid", handlers.GetWalletById(adminRepo))
+
+	
+
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 

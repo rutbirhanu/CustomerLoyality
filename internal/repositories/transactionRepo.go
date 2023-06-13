@@ -12,6 +12,7 @@ import (
 type TransactionRepo interface {
 	WithTrx(trxDB *gorm.DB) TransactionRepo
 	// FindUserrr(userid string, merchantid string) (string, error)
+	PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error)
 	FindSingleWallet(userId string, merchantId string) (*entities.Wallet, error)
 	PerformTransaction(amount float64, types string, recevierId string, userWalletID string, action string) error
 	Donate(charityid string, userId string, merchantId string, amount float64) error
@@ -20,14 +21,16 @@ type TransactionRepo interface {
 }
 
 type TransactionRepoImpl struct {
-	Db       *gorm.DB
-	UserRepo UserRepo
+	Db      		 *gorm.DB
+	UserRepo		 UserRepo
+	MerchantRepo	MerchantRepo
 }
 
-func NewTransactionRepo(db *gorm.DB, userRepo UserRepo) TransactionRepo {
+func NewTransactionRepo(db *gorm.DB, userRepo UserRepo, merchantRepo  MerchantRepo) TransactionRepo {
 	return &TransactionRepoImpl{
 		Db:       db,
 		UserRepo: userRepo,
+		MerchantRepo: merchantRepo,
 	}
 }
 
@@ -39,6 +42,34 @@ func (db *TransactionRepoImpl) WithTrx(trxDB *gorm.DB) TransactionRepo {
 	return db
 
 }
+
+
+func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error) {
+	user, err := db.UserRepo.FindUserByPhone(userPhone)
+	if err != nil {
+		return nil, err
+	}
+	merchant, err := db.MerchantRepo.FindMerchantById(merchantId)
+	if err != nil {
+		return nil, err
+	}
+
+	userWallet := entities.Wallet{}
+
+	result := db.Db.Table("wallets").
+		Where("user_id = ? AND merchant_id = ?", user.ID, merchant.ID).
+		Find(&userWallet)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	userWallet.Balance += point
+	db.Db.Save(userWallet)
+	return &userWallet, nil
+
+}
+
 
 func (db *TransactionRepoImpl) FindSingleWallet(userId string, merchantId string) (*entities.Wallet, error) {
 	userWallet := entities.Wallet{}

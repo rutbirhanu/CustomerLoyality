@@ -17,29 +17,22 @@ type MerchantRepo interface {
 	FindMerchantById(string) (*entities.Merchant, error)
 	FindMerchantByPhone(string) (*entities.Merchant, error)
 	RetrivePublicKey(phone string) (string, error)
-	PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error)
-
 	GenerateKeyPair() (string, string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
-	DeleteAll() error
 	CreateUser(entities.User, string) (*entities.User, error)
-
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
-	// UpdataUserPoints(string , float64) error
 }
 
 type MerchantRepoImpl struct {
 	Db              *gorm.DB
 	UserRepo        UserRepo
-	TransactionRepo TransactionRepo
 }
 
-func NewMerchantRepo(db *gorm.DB, userRepo UserRepo, trxRepo TransactionRepo) MerchantRepo {
+func NewMerchantRepo(db *gorm.DB, userRepo UserRepo) MerchantRepo {
 	return &MerchantRepoImpl{
 		Db:              db,
 		UserRepo:        userRepo,
-		TransactionRepo: trxRepo,
 	}
 }
 
@@ -100,32 +93,6 @@ func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*
 		return nil, err
 	}
 	return &user, nil
-}
-
-func (db *MerchantRepoImpl) PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error) {
-	user, err := db.UserRepo.FindUserByPhone(userPhone)
-	if err != nil {
-		return nil, err
-	}
-	merchant, err := db.FindMerchantById(merchantId)
-	if err != nil {
-		return nil, err
-	}
-
-	userWallet := entities.Wallet{}
-
-	result := db.Db.Table("wallets").
-		Where("user_id = ? AND merchant_id = ?", user.ID, merchant.ID).
-		Find(&userWallet)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	userWallet.Balance += point
-	db.Db.Save(userWallet)
-	return &userWallet, nil
-
 }
 
 func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
