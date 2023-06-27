@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -25,29 +26,29 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if !passCheck {
 			return c.JSON(http.StatusConflict, "incorrect password")
 		}
-		private , _ ,err:=repo.GenerateKeyPair()
-		if err!=nil{
-			c.JSON(http.StatusBadGateway,err)
+		private, err := repo.RetrivePrivateKey(data.PhoneNumber)
+		if err != nil {
+			c.JSON(http.StatusBadGateway, err)
 		}
-		merchant:= util.Merchant
-		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private),merchant,user.ID)
+		fmt.Print(private)
+		merchant := util.Merchant
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private), merchant, user.ID)
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}
+		c.Set("merchantID", user.ID)
 		user.Token = token
 		data.Token = token
 
-		cookie:= &http.Cookie{
-			Name: "auth-token",
+		cookie := &http.Cookie{
+			Name:  "auth-token",
 			Value: token,
 		}
-		cookie.SameSite=http.SameSiteLaxMode
-		cookie.HttpOnly=true
+		cookie.SameSite = http.SameSiteLaxMode
+		cookie.HttpOnly = true
 		c.SetCookie(cookie)
-		c.Set("merchantID",user.ID)
 
-		
-		c.JSON(http.StatusAccepted,data)
+		c.JSON(http.StatusAccepted, data)
 		return nil
 	}
 }

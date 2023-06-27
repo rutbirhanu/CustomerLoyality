@@ -36,7 +36,6 @@ func RegisterUser(repo repositories.MerchantRepo) echo.HandlerFunc {
 		if err != nil {
 			return err
 		}
-
 		userData := entities.User{
 			PhoneNumber: user.PhoneNumber,
 			UserName:    user.UserName,

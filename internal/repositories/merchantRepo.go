@@ -18,6 +18,7 @@ type MerchantRepo interface {
 	FindMerchantByPhone(string) (*entities.Merchant, error)
 	RetrivePublicKey(phone string) (string, error)
 	GenerateKeyPair() (string, string, error)
+	RetrivePrivateKey(string)(string,error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
 	CreateUser(entities.User, string) (*entities.User, error)
@@ -25,14 +26,14 @@ type MerchantRepo interface {
 }
 
 type MerchantRepoImpl struct {
-	Db              *gorm.DB
-	UserRepo        UserRepo
+	Db       *gorm.DB
+	UserRepo UserRepo
 }
 
 func NewMerchantRepo(db *gorm.DB, userRepo UserRepo) MerchantRepo {
 	return &MerchantRepoImpl{
-		Db:              db,
-		UserRepo:        userRepo,
+		Db:       db,
+		UserRepo: userRepo,
 	}
 }
 
@@ -76,23 +77,28 @@ func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) 
 
 func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
 	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
-	if err == nil {
+	if err != nil {
+		return nil, err
+	}
+	if User != nil {
 		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
 		if err != nil {
 			return nil, err
 		}
 		return User, nil
+	} else {
+
+		err = db.Db.Create(&user).Error
+		if err != nil {
+			return nil, err
+		}
+		_, _, err = db.AddUserToMerchant(merchantId, user.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &user, nil
 	}
 
-	err = db.Db.Create(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	_, _, err = db.AddUserToMerchant(merchantId, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
 }
 
 func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
@@ -101,7 +107,6 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-
 	privateKeyBytes := pem.EncodeToMemory(&pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
@@ -116,9 +121,7 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 		Type:  "PUBLIC KEY",
 		Bytes: publicKeyBytes,
 	})
-
 	return string(privateKeyBytes), string(publicKeyBytes), nil
-
 }
 
 func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant, error) {
@@ -173,6 +176,14 @@ func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
 	}
 	publicKey := merchant.PublicKey
 	return publicKey, nil
+}
+func (db MerchantRepoImpl) RetrivePrivateKey(phone string) (string,error){
+	merchant, err := db.FindMerchantByPhone(phone)
+	if err != nil {
+		return "", err
+	}
+	privateKey := merchant.PrivateKey
+	return privateKey, nil
 }
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {

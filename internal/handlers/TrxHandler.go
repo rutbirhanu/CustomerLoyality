@@ -10,7 +10,6 @@ import (
 )
 
 
-
 func PointCollection(repo repositories.TransactionRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		merchantId := c.Param("merchantid")
