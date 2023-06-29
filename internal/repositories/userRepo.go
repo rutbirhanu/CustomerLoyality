@@ -12,7 +12,7 @@ import (
 type UserRepo interface {
 	
 	GenerateKeyPair() (string, string, error)
-	// CreateUser(entities.User) (*entities.User, error)
+	CreateUser(entities.User) (*entities.User, error)
 	FindUserById(string) (*entities.User, error)
 	FindUserByPhone(string) (*entities.User, error)
 	// UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
@@ -31,6 +31,15 @@ func NewUserRepo(db *gorm.DB) UserRepo {
 	}
 }
 
+
+func (db *UserRepoImpl) CreateUser(User entities.User) (*entities.User, error){
+	err := db.Db.Create(&User).Error
+	if err != nil {
+		return nil, err
+	}
+	return &User,nil
+
+}
 
 func (db *UserRepoImpl) FindUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{}

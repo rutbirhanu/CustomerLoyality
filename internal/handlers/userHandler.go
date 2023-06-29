@@ -10,6 +10,21 @@ import (
 	"github.com/santimpay/customer-loyality/internal/util"
 )
 
+func UserRegistration(repo repositories.UserRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user := entities.User{}
+		err := c.Bind(&user)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "can not parse data")
+		}
+		createdUser, err := repo.CreateUser(user)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, "can not create")
+		}
+		c.JSON(http.StatusCreated, createdUser)
+		return nil
+	}
+}
 
 func GetUserById(srvc service.UserService) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -39,7 +54,7 @@ func Login(repo repositories.AdminRepo, srvc service.UserService, merRepo reposi
 
 		merchantId := c.Param("merchantid")
 		userId := c.Param("userid")
-		
+
 		mer, uss, err := repo.AddUserToMerchant(merchantId, userId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)

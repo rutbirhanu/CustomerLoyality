@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -30,7 +29,6 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if err != nil {
 			c.JSON(http.StatusBadGateway, err)
 		}
-		fmt.Print(private)
 		merchant := util.Merchant
 		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private), merchant, user.ID)
 		if err != nil {
@@ -47,8 +45,13 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		cookie.SameSite = http.SameSiteLaxMode
 		cookie.HttpOnly = true
 		c.SetCookie(cookie)
-
-		c.JSON(http.StatusAccepted, data)
+		hashedPass := util.HashPassword(user.Password)
+		userResponse:= entities.MerchantLogin{
+			Password:     hashedPass,
+			PhoneNumber:  user.PhoneNumber,
+			Token: token,
+		}
+		c.JSON(http.StatusAccepted, userResponse)
 		return nil
 	}
 }

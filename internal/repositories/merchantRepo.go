@@ -18,7 +18,7 @@ type MerchantRepo interface {
 	FindMerchantByPhone(string) (*entities.Merchant, error)
 	RetrivePublicKey(phone string) (string, error)
 	GenerateKeyPair() (string, string, error)
-	RetrivePrivateKey(string)(string,error)
+	RetrivePrivateKey(string) (string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
 	CreateUser(entities.User, string) (*entities.User, error)
@@ -77,17 +77,16 @@ func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) 
 
 func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
 	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
-	if err != nil {
-		return nil, err
-	}
-	if User != nil {
+	// if err == nil {
+	// 	return nil, err
+	// }
+	if err == nil {
 		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
 		if err != nil {
 			return nil, err
 		}
 		return User, nil
 	} else {
-
 		err = db.Db.Create(&user).Error
 		if err != nil {
 			return nil, err
@@ -125,6 +124,7 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 }
 
 func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant, error) {
+
 	err := db.Db.Create(&merchant).Error
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (db MerchantRepoImpl) RetrivePublicKey(phone string) (string, error) {
 	publicKey := merchant.PublicKey
 	return publicKey, nil
 }
-func (db MerchantRepoImpl) RetrivePrivateKey(phone string) (string,error){
+func (db MerchantRepoImpl) RetrivePrivateKey(phone string) (string, error) {
 	merchant, err := db.FindMerchantByPhone(phone)
 	if err != nil {
 		return "", err

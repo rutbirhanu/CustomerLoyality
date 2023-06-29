@@ -21,7 +21,6 @@ func GetAll(srvc service.MerchantService) echo.HandlerFunc {
 	}
 }
 
-
 func RegisterUser(repo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		merchantID:=c.Param("merchantid")
@@ -42,7 +41,7 @@ func RegisterUser(repo repositories.MerchantRepo) echo.HandlerFunc {
 			PrivateKey:  privateKey,
 			PublicKey:   publicKey,
 		}
-
+		
 		User, err := repo.CreateUser(userData,merchantID)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)

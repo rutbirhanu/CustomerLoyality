@@ -24,7 +24,7 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenString, err := c.Cookie("auth-token")
-			merchantid:= c.Get("merchantID")
+			// merchantid:= c.Get("merchantID")
 
 			if err != nil {
 				return c.JSON(http.StatusNotFound, "cookie not found")
@@ -41,7 +41,6 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 					return nil, fmt.Errorf("can not find the phone number")
 				}
 				publicKey, err := repo.RetrivePublicKey(phone)
-				fmt.Print(publicKey)
 				if err != nil {
 
 					return false, err
@@ -60,14 +59,11 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 				}
 				// fmt.Print(publicKey)
 
-				fmt.Print(Key)
-				fmt.Print(merchantid)
+				
 				return Key, nil
 			})
 
 			if err != nil {
-				fmt.Print(err)
-				fmt.Print("errorrr")
 				return errors.New("error occured")
 			}
 			fmt.Print(token)

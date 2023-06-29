@@ -4,7 +4,7 @@ type Merchant struct {
 	Model
 	MerchantName string ` validate:" required , max=30"  json:"name" `
 	Password     string ` validate:" required , max=30, min=6 "  json:"password" `
-	PhoneNumber  string `  validate:" required "  json:"phonenumber" `
+	PhoneNumber  string `  validate:" required "  json:"phonenumber" gorm:"size:10;" `
 	Token        string `json:"token"`
 	BusinessName string ` validate:" required , max=30"  json:"businessname" `
 	PrivateKey   string

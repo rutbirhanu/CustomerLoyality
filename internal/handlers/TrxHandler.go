@@ -15,14 +15,14 @@ func PointCollection(repo repositories.TransactionRepo) echo.HandlerFunc {
 		merchantId := c.Param("merchantid")
 		data := entities.Collection{}
 		err := c.Bind(&data)
-		// tx_handler:= c.Get("db_tx")
+		tx_handler:= c.Get("db_tx")
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
-		// trxRepo:= repo.WithTrx(tx_handler.(*gorm.DB))
-		wallet,err:= repo.PointCollection(data.UserPhone,data.Points,merchantId)
+		trxRepo:= repo.WithTrx(tx_handler.(*gorm.DB))
+		wallet,err:= trxRepo.PointCollection(data.UserPhone,data.Points,merchantId)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, err)
+			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 		return c.JSON(http.StatusAccepted, wallet)
 
