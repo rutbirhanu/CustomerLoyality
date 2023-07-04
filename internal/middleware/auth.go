@@ -24,7 +24,7 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenString, err := c.Cookie("auth-token")
-			// merchantid:= c.Get("merchantID")
+			merchantid := c.Param("merchantid")
 
 			if err != nil {
 				return c.JSON(http.StatusNotFound, "cookie not found")
@@ -59,14 +59,12 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 				}
 				// fmt.Print(publicKey)
 
-				
 				return Key, nil
 			})
 
 			if err != nil {
 				return errors.New("error occured")
 			}
-			fmt.Print(token)
 
 			if !token.Valid {
 				return errors.New("invalid token")
@@ -75,24 +73,23 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 			if !ok {
 				return errors.New("invalid token claims")
 			}
-			fmt.Print(claims)
 
-			// userRole, ok := claims["Role"]
-			// if !ok {
-			// 	return errors.New("role not found")
+			userRole, ok := claims["Role"]
+			if !ok {
+				return errors.New("role not found")
 
-			// }
-			// merchantID, ok := claims["merchantid"]
-			// if !ok {
-			// 	return errors.New("merchant ID not found in token claims")
-			// }
+			}
+			merchantID, ok := claims["merchantid"]
+			if !ok {
+				return errors.New("merchant ID not found in token claims")
+			}
 
-			// if userRole != "merchant" {
-			// 	return errors.New("unauthorized access")
-			// }
-			// if merchantID != "29e8b28f-8125-4ae4-bc94-72e040cdfd99" {
-			// 	return errors.New("login with this specific merchant")
-			// }
+			if userRole != "merchant" {
+				return errors.New("unauthorized access")
+			}
+			if merchantID != merchantid {
+				return errors.New("login with this specific merchant")
+			}
 
 			next(c)
 			return nil

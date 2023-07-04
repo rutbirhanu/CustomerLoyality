@@ -34,7 +34,7 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}
-		c.Set("merchantID", user.ID)
+		
 		user.Token = token
 		data.Token = token
 

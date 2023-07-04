@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -9,26 +10,37 @@ import (
 	"gorm.io/gorm"
 )
 
-
 func PointCollection(repo repositories.TransactionRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		merchantId := c.Param("merchantid")
 		data := entities.Collection{}
 		err := c.Bind(&data)
-		tx_handler:= c.Get("db_tx")
+		tx_handler := c.Get("db_tx")
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
-		trxRepo:= repo.WithTrx(tx_handler.(*gorm.DB))
-		wallet,err:= trxRepo.PointCollection(data.UserPhone,data.Points,merchantId)
+		trxRepo := repo.WithTrx(tx_handler.(*gorm.DB))
+		wallet, err := trxRepo.PointCollection(data.UserPhone, data.Points, merchantId)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		err, statusCode := repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n thanks for choosing us", data.Points, merchant.BusinessName), "####", "0968######")
+		if err != nil {
+			 c.JSON(http.StatusBadRequest, err.Error())
+		}
+		if statusCode == 202 {
+			c.JSON(http.StatusAccepted, "SMS succesfully sent")
 		}
 		return c.JSON(http.StatusAccepted, wallet)
 
 	}
 }
-
 
 func TransferPoint(repo repositories.TransactionRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -38,17 +50,37 @@ func TransferPoint(repo repositories.TransactionRepo) echo.HandlerFunc {
 		tx_handler := c.Get("db_tx")
 		txRepo := repo.WithTrx(tx_handler.(*gorm.DB))
 
-		toUser := entities.TransferPoint{}
-		err := c.Bind(&toUser)
+		data := entities.TransferPoint{}
+		err := c.Bind(&data)
 		if err != nil {
 			return err
 		}
-		wall, err := txRepo.TransferPoints(toUser.Amount, userId, merchantId, toUser.Phone)
+		wallet, err := txRepo.TransferPoints(data.Amount, userId, merchantId, data.Phone)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
-		c.JSON(http.StatusAccepted, wall)
-		return nil
+
+		merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+		user, err := repo.FindUserFromWallet(wallet.UserID)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err.Error())
+		}
+
+		err, statusCode := repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n into your %s wallet", data.Amount, user.PhoneNumber, merchant.BusinessName), "####", "0968######")
+		if err != nil {
+			 c.JSON(http.StatusBadRequest, err.Error())
+		}
+		if statusCode == 202 {
+			c.JSON(http.StatusAccepted, "SMS succesfully sent")
+		}
+		return c.JSON(http.StatusAccepted, wallet)
 	}
 }
 
@@ -90,9 +122,8 @@ func Donate(repo repositories.TransactionRepo) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 
 		}
-	
 
-		return c.JSON(http.StatusAccepted,"success")
+		return c.JSON(http.StatusAccepted, "success")
 	}
 }
 
@@ -107,3 +138,13 @@ func FindUserMer(repo repositories.TransactionRepo) echo.HandlerFunc {
 		return c.JSON(http.StatusAccepted, merchant)
 	}
 }
+
+// func Send(repo repositories.TransactionRepo) echo.HandlerFunc{
+// 	return func(c echo.Context) error{
+// 		err:= repo.SendSMS("u have successfully implemented the api","9360","0968581847")
+// 		if err!=nil{
+// 			return c.JSON(http.StatusBadRequest,err)
+// 		}
+// 		return c.JSON(http.StatusAccepted,"sent")
+// 	}
+// }

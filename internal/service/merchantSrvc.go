@@ -5,77 +5,90 @@ import (
 	"github.com/santimpay/customer-loyality/internal/repositories"
 )
 
-
 type MerchantService interface {
 	CreateMerchant(entities.Merchant) (*entities.Merchant, bool)
 	FindMerchantById(string) (*entities.Merchant, bool)
 	FindMerchantByPhone(string) (*entities.Merchant, bool)
-	GetAllMerchants()(*[]entities.Merchant,bool)
+	GetAllMerchants() (*[]entities.Merchant, bool)
 	RetrivePublicKey(phone string) (string, bool)
 	GenerateKeyPair() (string, string, bool)
-	
+	RetrivePrivateKey(string) (string, bool)
+	CreateUser(user entities.User, merchantid string) (*entities.User, bool)
 }
 
-
-type MerchantServiceImpl struct{
-	merchantRepo     repositories.MerchantRepo
+type MerchantServiceImpl struct {
+	merchantRepo repositories.MerchantRepo
 }
 
-func NewMerchantSrvc(repo repositories.MerchantRepo) MerchantService{
+func NewMerchantSrvc(repo repositories.MerchantRepo) MerchantService {
 	return &MerchantServiceImpl{
-		merchantRepo:repo ,
-		
+		merchantRepo: repo,
 	}
 }
 
-
-func (srvc MerchantServiceImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant,bool){
-	regMerchant,err:=srvc.merchantRepo.CreateMerchant(merchant)
-	if err!=nil{
-		return nil,false
+func (srvc MerchantServiceImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant, bool) {
+	regMerchant, err := srvc.merchantRepo.CreateMerchant(merchant)
+	if err != nil {
+		return nil, false
 	}
-	return regMerchant,true
+	return regMerchant, true
 }
 
-func (srvc MerchantServiceImpl) FindMerchantById(merchantId string) (*entities.Merchant, bool){
+func (srvc MerchantServiceImpl) FindMerchantById(merchantId string) (*entities.Merchant, bool) {
 	merchant, err := srvc.merchantRepo.FindMerchantById(merchantId)
-	if err!=nil{
+	if err != nil {
 		return nil, false
 	}
 
-	return merchant,true
+	return merchant, true
 }
 
-func (srvc MerchantServiceImpl) FindMerchantByPhone (phone string) (*entities.Merchant, bool){
-	merchant, err:= srvc.merchantRepo.FindMerchantByPhone(phone)
-	if err!=nil{
-		return nil,false
+func (srvc MerchantServiceImpl) FindMerchantByPhone(phone string) (*entities.Merchant, bool) {
+	merchant, err := srvc.merchantRepo.FindMerchantByPhone(phone)
+	if err != nil {
+		return nil, false
 	}
-	return merchant,true
+	return merchant, true
 }
 
-func (srvc MerchantServiceImpl) GetAllMerchants()(*[]entities.Merchant,bool){
-	data,err:=srvc.merchantRepo.GetAllMerchants()
-	if err!=nil{
-		return nil,false
+func (srvc MerchantServiceImpl) GetAllMerchants() (*[]entities.Merchant, bool) {
+	data, err := srvc.merchantRepo.GetAllMerchants()
+	if err != nil {
+		return nil, false
 	}
 	return data, true
 }
 
-func (srvc MerchantServiceImpl) RetrivePublicKey(phone string) (string, bool){
-	key,err:= srvc.merchantRepo.RetrivePublicKey(phone)
-	if err!=nil{
-		return "",false
+func (srvc MerchantServiceImpl) RetrivePublicKey(phone string) (string, bool) {
+	key, err := srvc.merchantRepo.RetrivePublicKey(phone)
+	if err != nil {
+		return "", false
 	}
 	return key, true
 }
 
-func (srvc MerchantServiceImpl) GenerateKeyPair() (string, string, bool){
-	private, public ,err := srvc.merchantRepo.GenerateKeyPair()
-	
-	if err!=nil{
-		return "","", false
-	}
-	return private,public, true
+func (srvc MerchantServiceImpl) GenerateKeyPair() (string, string, bool) {
+	private, public, err := srvc.merchantRepo.GenerateKeyPair()
 
+	if err != nil {
+		return "", "", false
+	}
+	return private, public, true
+
+}
+
+func (srvc MerchantServiceImpl) RetrivePrivateKey(phone string) (string, bool) {
+	privateKey, err := srvc.merchantRepo.RetrivePrivateKey(phone)
+	if err != nil {
+		return "", false
+	}
+	return privateKey, true
+}
+
+func (srvc *MerchantServiceImpl) CreateUser(user entities.User, merchantid string) (*entities.User, bool) {
+	User, err := srvc.merchantRepo.CreateUser(user, merchantid)
+	if err != nil {
+		return nil, false
+	}
+	return User, true
 }

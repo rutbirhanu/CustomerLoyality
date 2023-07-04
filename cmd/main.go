@@ -71,6 +71,7 @@ func main() {
 
 	adminRoute := app.Group("/admin")
 	adminRoute.GET("/getWallet/:Walletid", handlers.GetWalletById(adminRepo))
+	// app.GET("/sms",handlers.Send(trxRepo))
 
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))

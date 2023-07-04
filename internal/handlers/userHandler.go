@@ -80,9 +80,13 @@ func Loginn(repo repositories.UserRepo, srvc service.UserService, adminRepo repo
 			return c.JSON(http.StatusBadRequest, "incorrect input ")
 		}
 
-		private, _, err := repo.GenerateKeyPair()
+		// private, _, err := repo.GenerateKeyPair()
+		// if err != nil {
+		// 	c.JSON(http.StatusBadGateway, err)
+		// }
+		private,err:= repo.RetrivePrivateKey(user.PhoneNumber)
 		if err != nil {
-			c.JSON(http.StatusBadGateway, err)
+			return c.JSON(http.StatusConflict, "can not retrive private key")
 		}
 		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.UserName, []byte(private), util.User, merchantId)
 		if err != nil {

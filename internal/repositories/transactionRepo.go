@@ -3,8 +3,13 @@ package repositories
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/santimpay/customer-loyality/internal/entities"
 	"gorm.io/gorm"
 )
@@ -17,6 +22,10 @@ type TransactionRepo interface {
 	PerformTransaction(amount float64, types string, recevierId string, userWalletID string, action string) error
 	Donate(charityid string, userId string, merchantId string, amount float64) error
 	BuyAirTime(amount float64, userId string, merchantId string) error
+	SendSMS(text string, from string, to string) (error, int)
+	FindSenderInfo(walletid string) (*entities.Wallet, error)
+	FindMerchantFromWallet(id string) (*entities.Merchant, error)
+	FindUserFromWallet(id string) (*entities.User, error)
 	TransferPoints(amount float64, userId string, merchantId string, to string) (*entities.Wallet, error)
 }
 
@@ -36,11 +45,86 @@ func NewTransactionRepo(db *gorm.DB, userRepo UserRepo, merchantRepo MerchantRep
 
 func (db *TransactionRepoImpl) WithTrx(trxDB *gorm.DB) TransactionRepo {
 	if trxDB == nil {
-		log.Print("txn db not founc")
+		log.Print("txn db is not found")
 	}
 	db.Db = trxDB
 	return db
 
+}
+
+func (db *TransactionRepoImpl) SendSMS(text string, from string, to string) (error,int) {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	baseURL := os.Getenv("SMS_BASEURL")
+	params := url.Values{}
+	params.Set("username", os.Getenv("SMS_USERNAME"))
+	params.Set("password", os.Getenv("SMS_PASSWORD"))
+	params.Set("text", text)
+	params.Set("from", from)
+	params.Set("to", to)
+
+	// Create an HTTP client
+	client := &http.Client{}
+
+	// Create the request with the parameters
+	req, err := http.NewRequest("GET", baseURL, nil)
+	if err != nil {
+		return err, -1
+	}
+	req.URL.RawQuery = params.Encode()
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return err, -1
+	}
+
+	defer resp.Body.Close()
+
+	// Check the response status
+	if resp.StatusCode != http.StatusAccepted {
+		return fmt.Errorf("failed to send SMS. Status code: %d", resp.StatusCode), resp.StatusCode
+	}
+	
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err, -1
+	}
+
+	// Print the response body
+	fmt.Println(string(body))
+
+	return nil, resp.StatusCode
+
+}
+
+func (db *TransactionRepoImpl) FindMerchantFromWallet(id string) (*entities.Merchant, error) {
+	merchant, err := db.MerchantRepo.FindMerchantById(id)
+	if err != nil {
+		return nil, err
+	}
+	return merchant, nil
+}
+
+func (db *TransactionRepoImpl) FindUserFromWallet(id string) (*entities.User, error) {
+	user, err := db.UserRepo.FindUserById(id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+func (db *TransactionRepoImpl) FindSenderInfo(walletid string) (*entities.Wallet, error) {
+	wallet := entities.Wallet{}
+	err := db.Db.Model(&entities.Wallet{}).Where("id=?", walletid).Find(&wallet).Error
+	if err != nil {
+		return nil, err
+	}
+	return &wallet, nil
 }
 
 func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, error) {

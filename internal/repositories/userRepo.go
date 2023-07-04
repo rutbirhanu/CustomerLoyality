@@ -18,6 +18,7 @@ type UserRepo interface {
 	// UserLogin(user entities.UserLogin, merchantId string) (*entities.User, error)
 	UpdateUser(user *entities.User) error
 	RetrivePublicKey(phone string) (string, error)
+	RetrivePrivateKey(phone string) (string, error)
 	// CheckBalance()
 }
 
@@ -98,10 +99,19 @@ func (db *UserRepoImpl) GenerateKeyPair() (string, string, error) {
 
 }
 
-func (db * UserRepoImpl) RetrivePublicKey(phone string) (string, error){
+func (db *UserRepoImpl) RetrivePublicKey(phone string) (string, error){
 	user,err:= db.FindUserByPhone(phone)
 	if err!=nil{
 		return "", err
 	}
 	return user.PublicKey, nil
+}
+
+func (db UserRepoImpl) RetrivePrivateKey(phone string) (string, error) {
+	user, err := db.FindUserByPhone(phone)
+	if err != nil {
+		return "", err
+	}
+	privateKey := user.PrivateKey
+	return privateKey, nil
 }
