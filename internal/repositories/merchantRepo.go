@@ -1,8 +1,10 @@
 package repositories
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
+	// "crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -21,6 +23,7 @@ type MerchantRepo interface {
 	RetrivePrivateKey(string) (string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
+	AddUserToMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error)
 	CreateUser(entities.User, string) (*entities.User, error)
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
 }
@@ -77,9 +80,7 @@ func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) 
 
 func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
 	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
-	// if err == nil {
-	// 	return nil, err
-	// }
+	
 	if err == nil {
 		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
 		if err != nil {
@@ -100,28 +101,28 @@ func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*
 
 }
 
-func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
+// func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return "", "", err
-	}
-	privateKeyBytes := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	})
+// 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+// 	if err != nil {
+// 		return "", "", err
+// 	}
+// 	privateKeyBytes := pem.EncodeToMemory(&pem.Block{
+// 		Type:  "RSA PRIVATE KEY",
+// 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+// 	})
 
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return "", string(privateKeyBytes), err
-	}
+// 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+// 	if err != nil {
+// 		return "", string(privateKeyBytes), err
+// 	}
 
-	publicKeyBytes = pem.EncodeToMemory(&pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: publicKeyBytes,
-	})
-	return string(privateKeyBytes), string(publicKeyBytes), nil
-}
+// 	publicKeyBytes = pem.EncodeToMemory(&pem.Block{
+// 		Type:  "PUBLIC KEY",
+// 		Bytes: publicKeyBytes,
+// 	})
+// 	return string(privateKeyBytes), string(publicKeyBytes), nil
+// }
 
 func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant, error) {
 
@@ -137,6 +138,38 @@ func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entitie
 	return storedMerchant, nil
 
 }
+
+
+func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", "", err
+	}
+
+	privateKeyBytes, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		return "", "", err
+	}
+
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "EC PRIVATE KEY",
+		Bytes: privateKeyBytes,
+	})
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return "", "", err
+	}
+
+	publicKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: publicKeyBytes,
+	})
+
+	return string(privateKeyPEM), string(publicKeyPEM), nil
+}
+
+
 
 func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
 	allMerchats := []entities.Merchant{}

@@ -21,6 +21,8 @@ func Connect(config *configs.DbConfig) (*gorm.DB, error) {
 		&entities.User{},
 		&entities.Wallet{},
 		&entities.Transaction{},
+		&entities.TokenTable{},
+		&entities.GiftCard{},
 	); err != nil {
 		return nil, err
 	}

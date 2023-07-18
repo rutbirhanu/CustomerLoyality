@@ -21,6 +21,13 @@ func UserRegistration(repo repositories.UserRepo) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not create")
 		}
+
+		// test this here so that others can be improved
+		// response:= entities.CreatedUserResponse{
+		// 	PhoneNumber: createdUser.PhoneNumber,
+		// 	UserName: createdUser.UserName,
+		// 	Merchants: []*entities.UsersMerchantResponse{},
+		// }
 		c.JSON(http.StatusCreated, createdUser)
 		return nil
 	}
@@ -88,7 +95,7 @@ func Loginn(repo repositories.UserRepo, srvc service.UserService, adminRepo repo
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not retrive private key")
 		}
-		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.UserName, []byte(private), util.User, merchantId)
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, []byte(private), util.User, merchantId)
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}

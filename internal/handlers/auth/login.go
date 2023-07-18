@@ -30,7 +30,7 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 			c.JSON(http.StatusBadGateway, err)
 		}
 		merchant := util.Merchant
-		token, err := util.GenerateToken(user.PhoneNumber, user.ID, user.MerchantName, []byte(private), merchant, user.ID)
+		token, err := util.GenerateToken(user.PhoneNumber, user.ID, []byte(private), merchant, user.ID)
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}

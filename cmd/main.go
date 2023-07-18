@@ -73,6 +73,10 @@ func main() {
 	adminRoute.GET("/getWallet/:Walletid", handlers.GetWalletById(adminRepo))
 	// app.GET("/sms",handlers.Send(trxRepo))
 
+// call with api need separate route
+
+
+
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))
 

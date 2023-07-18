@@ -29,6 +29,7 @@ func RegisterUser(repo repositories.MerchantRepo) echo.HandlerFunc {
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
+// check if the user is in the user table before generating the keys
 
 		privateKey, publicKey, err := repo.GenerateKeyPair()
 

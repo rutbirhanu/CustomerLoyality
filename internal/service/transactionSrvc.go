@@ -18,7 +18,7 @@ type TrxService interface {
 
 	PointCollection(userPhone string, point float64, merchantId string) (*entities.Wallet, bool)
 	BuyAirTime(amount float64, userId string, merchantId string) bool
-	SendSMS(text string, from string, to string) (bool, int)
+	SendSMS(text string, from string, to string) (bool)
 	FindSenderInfo(walletid string) (*entities.Wallet, bool)
 	FindMerchantFromWallet(id string) (*entities.Merchant, bool)
 	FindUserFromWallet(id string) (*entities.User, bool)
@@ -88,12 +88,12 @@ func (srvc *TrxServiceImpl) BuyAirTime(amount float64, userId string, merchantId
 	return true
 }
 
-func (srvc *TrxServiceImpl) SendSMS(text string, from string, to string) (bool, int){
-	err,statusCode:= srvc.TrxRepo.SendSMS(text,from,to)
+func (srvc *TrxServiceImpl) SendSMS(text string, from string, to string) bool{
+	err := srvc.TrxRepo.SendSMS(text,from,to)
 	if err!=nil{
-		return false,statusCode
+		return false
 	}
-	return true,statusCode
+	return true
 }
 
 func (srvc *TrxServiceImpl) FindSenderInfo(walletid string) (*entities.Wallet, bool){

@@ -30,13 +30,11 @@ func PointCollection(repo repositories.TransactionRepo) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		err, statusCode := repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n thanks for choosing us", data.Points, merchant.BusinessName), "####", "0968######")
+		err = repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n thanks for choosing us", data.Points, merchant.BusinessName), "9360", "0968581847")
 		if err != nil {
-			 c.JSON(http.StatusBadRequest, err.Error())
+			c.JSON(http.StatusBadRequest, err.Error())
 		}
-		if statusCode == 202 {
-			c.JSON(http.StatusAccepted, "SMS succesfully sent")
-		}
+		
 		return c.JSON(http.StatusAccepted, wallet)
 
 	}
@@ -73,13 +71,11 @@ func TransferPoint(repo repositories.TransactionRepo) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		err, statusCode := repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n into your %s wallet", data.Amount, user.PhoneNumber, merchant.BusinessName), "####", "0968######")
+		err= repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n into your %s wallet", data.Amount, user.PhoneNumber, merchant.BusinessName), "9360", "0968581847")
 		if err != nil {
-			 c.JSON(http.StatusBadRequest, err.Error())
+			c.JSON(http.StatusBadRequest, err.Error())
 		}
-		if statusCode == 202 {
-			c.JSON(http.StatusAccepted, "SMS succesfully sent")
-		}
+	
 		return c.JSON(http.StatusAccepted, wallet)
 	}
 }

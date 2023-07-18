@@ -1,28 +1,40 @@
 package entities
 
+
 type Transaction struct {
 	Model
 	Amount         float64 `json:"amount"`
 	Type           string  `json:"type"`
-	Action 			string 		`json:"action"`
-	ReceiverID      string  `json:"receiver,omitempty"`
+	Action         string  `json:"action"`
+	ReceiverID     string  `json:"receiver,omitempty"`
 	UserMerchantID string  `gorm:"foreignkey"`
 }
 
-type TransferPoint struct{
-	Amount 		float64		`json:"amount"`
-	Phone		string 		`json:"phone"`
+type TransferPoint struct {
+	Amount float64 `json:"amount"`
+	Phone  string  `json:"phone"`
 }
 
 type Collection struct {
-	Points         float64 		`json:"point"`
-	UserPhone 		string 		`json:"phone"`
+	Points    float64 `json:"point"`
+	UserPhone string  `json:"phone"`
 	// UserMerchantId string  		`gorm:"foreignkey"`
 }
 
-type RequestData struct{
-	Amount 		float64 	`json:"amount"`
+type RequestData struct {
+	Amount float64 `json:"amount"`
 }
+
+type GiftCard struct {
+	Model
+	Amount        float64 `json:"amount"`
+	RecipentPhone string  `json:"recipientPhone"`
+	MerchantId    string  `json:"merchantId"`
+	GiftCardCode  string  `json:"giftCardCode"`
+	PurchaserPhone		string 		`json:"purchasePhone"`
+	Active			bool		`json:"active,omitempty"`
+}
+
 
 var Organizations = []map[string]string{
 	{

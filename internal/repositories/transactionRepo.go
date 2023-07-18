@@ -22,7 +22,7 @@ type TransactionRepo interface {
 	PerformTransaction(amount float64, types string, recevierId string, userWalletID string, action string) error
 	Donate(charityid string, userId string, merchantId string, amount float64) error
 	BuyAirTime(amount float64, userId string, merchantId string) error
-	SendSMS(text string, from string, to string) (error, int)
+	SendSMS(text string, from string, to string) error
 	FindSenderInfo(walletid string) (*entities.Wallet, error)
 	FindMerchantFromWallet(id string) (*entities.Merchant, error)
 	FindUserFromWallet(id string) (*entities.User, error)
@@ -52,7 +52,7 @@ func (db *TransactionRepoImpl) WithTrx(trxDB *gorm.DB) TransactionRepo {
 
 }
 
-func (db *TransactionRepoImpl) SendSMS(text string, from string, to string) (error,int) {
+func (db *TransactionRepoImpl) SendSMS(text string, from string, to string) (error) {
 	err := godotenv.Load()
 
 	if err != nil {
@@ -73,34 +73,33 @@ func (db *TransactionRepoImpl) SendSMS(text string, from string, to string) (err
 	// Create the request with the parameters
 	req, err := http.NewRequest("GET", baseURL, nil)
 	if err != nil {
-		return err, -1
+		return err
 	}
 	req.URL.RawQuery = params.Encode()
 
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		return err, -1
+		return err
 	}
 
 	defer resp.Body.Close()
 
 	// Check the response status
 	if resp.StatusCode != http.StatusAccepted {
-		return fmt.Errorf("failed to send SMS. Status code: %d", resp.StatusCode), resp.StatusCode
+		return fmt.Errorf("failed to send SMS. Status code: %d", resp.StatusCode)
 	}
 	
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err, -1
+		return err
 	}
 
 	// Print the response body
 	fmt.Println(string(body))
 
-	return nil, resp.StatusCode
-
+	return nil
 }
 
 func (db *TransactionRepoImpl) FindMerchantFromWallet(id string) (*entities.Merchant, error) {
@@ -136,6 +135,7 @@ func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, 
 	if err != nil {
 		return nil, err
 	}
+	ratio:=merchant.PointConfiguration
 
 	userWallet := entities.Wallet{}
 
@@ -147,7 +147,7 @@ func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, 
 		return nil, result.Error
 	}
 
-	userWallet.Balance += point
+	userWallet.Balance += (point*ratio)
 	db.Db.Save(userWallet)
 
 	err = db.PerformTransaction(point, "point collection", "", userWallet.ID, "credit")

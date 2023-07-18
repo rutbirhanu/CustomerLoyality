@@ -12,36 +12,44 @@ import (
 
 func Signup(srvc service.MerchantService, repo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user := entities.Merchant{}
-		err := c.Bind(&user)
+		merchant := entities.Merchant{}
+		err := c.Bind(&merchant)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
-		_, exist := srvc.FindMerchantByPhone(user.PhoneNumber)
+		_, exist := srvc.FindMerchantByPhone(merchant.PhoneNumber)
 		if exist {
 			return c.JSON(http.StatusBadRequest, "phone number already exist")
 
 		}
-		hashedPass := util.HashPassword(user.Password)
+		hashedPass := util.HashPassword(merchant.Password)
 		privateKey,publicKey, err := repo.GenerateKeyPair()
 		
 		if err != nil {
 			return err
 		}
 
-		userData := entities.Merchant{
-			MerchantName: user.MerchantName,
+
+		merchantData := entities.Merchant{
+			MerchantName: merchant.MerchantName,
 			Password:     hashedPass,
-			PhoneNumber:  user.PhoneNumber,
-			BusinessName: user.BusinessName,
+			PhoneNumber:  merchant.PhoneNumber,
+			BusinessName: merchant.BusinessName,
 			PrivateKey: privateKey,
 			PublicKey: publicKey,
 		}
-		data, stored := srvc.CreateMerchant(userData)
+		data, stored := srvc.CreateMerchant(merchantData)
 		if !stored {
 			return c.JSON(http.StatusBadRequest, err)
 		}
-		c.JSON(http.StatusAccepted, data)
+		
+		response:= entities.CreatedMerchantResponse{
+			MerchantName: data.MerchantName,
+			Password:     hashedPass,
+			PhoneNumber:  data.PhoneNumber,
+			BusinessName: data.BusinessName,
+		}
+		c.JSON(http.StatusAccepted, response)
 		return nil
 	}
 }

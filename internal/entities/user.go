@@ -16,8 +16,7 @@ type User struct {
 	PublicKey    string
 }
 
-type MerchantsUserResponse struct{
-	Model
+type UserInfo struct{
 	PhoneNumber string      `  json:"phonenumber" validate:"required"`
 	UserName    string      `json:"username" validate:"required"`
 }
@@ -31,8 +30,9 @@ type UserLogin struct {
 type CreatedUserResponse struct{
 	PhoneNumber	 string     	 `json:"phonenumber" validate:"required"`
 	UserName   	 string     	 `json:"username" validate:"required"`
-	Merchants  	 []*UsersMerchantResponse	 
+	Merchants  	 []*MerchantInfo  
 }
+
 
 type Wallet struct {
 	ID         		string		 `gorm:"primary_key;"`

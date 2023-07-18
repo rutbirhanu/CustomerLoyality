@@ -2,6 +2,7 @@ package middleware
 
 import (
 	// "crypto/rsa"
+	"crypto/ecdsa"
 	"crypto/x509"
 	"log"
 
@@ -30,36 +31,64 @@ func Auth(repo repositories.MerchantRepo) echo.MiddlewareFunc {
 				return c.JSON(http.StatusNotFound, "cookie not found")
 			}
 			var phone string
+			// token, err := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
+			// 	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			// 		return nil, fmt.Errorf("unexpected signing method")
+			// 	}
+			// 	if phoneNum, ok := token.Claims.(jwt.MapClaims)["PhoneNumber"].(string); ok {
+			// 		phone = phoneNum
+
+			// 	} else {
+			// 		return nil, fmt.Errorf("can not find the phone number")
+			// 	}
+			// 	publicKey, err := repo.RetrivePublicKey(phone)
+			// 	if err != nil {
+
+			// 		return false, err
+			// 	}
+
+			// 	block, _ := pem.Decode([]byte(publicKey))
+			// 	if block == nil {
+			// 		log.Fatalf("No PEM blob found")
+			// 	}
+
+			// 	Key, err := x509.ParsePKIXPublicKey(block.Bytes)
+
+			// 	if err != nil {
+			// 		log.Fatalf("Failed to parse public key: %v", err)
+			// 		return "", err
+			// 	}
+			// 	// fmt.Print(publicKey)
+
+			// 	return Key, nil
+			// })
+
 			token, err := jwt.Parse(tokenString.Value, func(token *jwt.Token) (interface{}, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 					return nil, fmt.Errorf("unexpected signing method")
 				}
 				if phoneNum, ok := token.Claims.(jwt.MapClaims)["PhoneNumber"].(string); ok {
 					phone = phoneNum
-
 				} else {
-					return nil, fmt.Errorf("can not find the phone number")
+					return nil, fmt.Errorf("cannot find the phone number")
 				}
 				publicKey, err := repo.RetrivePublicKey(phone)
 				if err != nil {
-
-					return false, err
+					return nil, err
 				}
-
 				block, _ := pem.Decode([]byte(publicKey))
 				if block == nil {
 					log.Fatalf("No PEM blob found")
 				}
-
-				Key, err := x509.ParsePKIXPublicKey(block.Bytes)
-
+				pubKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 				if err != nil {
 					log.Fatalf("Failed to parse public key: %v", err)
-					return "", err
 				}
-				// fmt.Print(publicKey)
-
-				return Key, nil
+				ecdsaPubKey, ok := pubKey.(*ecdsa.PublicKey)
+				if !ok {
+					return nil, fmt.Errorf("unexpected public key type")
+				}
+				return ecdsaPubKey, nil
 			})
 
 			if err != nil {
