@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	// "fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -25,16 +25,16 @@ func PointCollection(repo repositories.TransactionRepo) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
+		// merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
+		// if err != nil {
+		// 	return c.JSON(http.StatusBadRequest, err.Error())
+		// }
 
-		err = repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n thanks for choosing us", data.Points, merchant.BusinessName), "9360", "0968581847")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
-		}
-		
+		// err = repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n thanks for choosing us", data.Points, merchant.BusinessName), "9360", "0968581847")
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, err.Error())
+		// }
+
 		return c.JSON(http.StatusAccepted, wallet)
 
 	}
@@ -58,24 +58,24 @@ func TransferPoint(repo repositories.TransactionRepo) echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
-		user, err := repo.FindUserFromWallet(wallet.UserID)
-		if err != nil {
-			return c.JSON(http.StatusBadRequest, err.Error())
-		}
+		// merchant, err := repo.FindMerchantFromWallet(wallet.MerchantID)
+		// if err != nil {
+		// 	return c.JSON(http.StatusBadRequest, err.Error())
+		// }
+		// user, err := repo.FindUserFromWallet(wallet.UserID)
+		// if err != nil {
+		// 	return c.JSON(http.StatusBadRequest, err.Error())
+		// }
 
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err.Error())
 		}
 
-		err= repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n into your %s wallet", data.Amount, user.PhoneNumber, merchant.BusinessName), "9360", "0968581847")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
-		}
-	
+		// err= repo.SendSMS(fmt.Sprintf("you have earned %.1f points from %s ,\n into your %s wallet", data.Amount, user.PhoneNumber, merchant.BusinessName), "9360", "0968581847")
+		// if err != nil {
+		// 	c.JSON(http.StatusBadRequest, err.Error())
+		// }
+
 		return c.JSON(http.StatusAccepted, wallet)
 	}
 }

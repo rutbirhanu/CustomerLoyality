@@ -135,7 +135,8 @@ func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, 
 	if err != nil {
 		return nil, err
 	}
-	ratio:=merchant.PointConfiguration
+	//check for error
+	// ratio:=merchant.PointConfiguration
 
 	userWallet := entities.Wallet{}
 
@@ -147,7 +148,7 @@ func (db *TransactionRepoImpl) PointCollection(userPhone string, point float64, 
 		return nil, result.Error
 	}
 
-	userWallet.Balance += (point*ratio)
+	userWallet.Balance += (point*0.1)
 	db.Db.Save(userWallet)
 
 	err = db.PerformTransaction(point, "point collection", "", userWallet.ID, "credit")

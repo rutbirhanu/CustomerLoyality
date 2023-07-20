@@ -42,6 +42,7 @@ func main() {
 	userRepo := repositories.NewUserRepo(db)
 	merchantRepo := repositories.NewMerchantRepo(db, userRepo)
 	trxRepo := repositories.NewTransactionRepo(db, userRepo, merchantRepo)
+	apiRepo := repositories.NewApiRepo(db, merchantRepo, userRepo, trxRepo)
 	adminRepo := repositories.NewAdminRepo(db, userRepo, merchantRepo)
 	userSrvc := service.NewUserSrvc(userRepo)
 	merchantSrvc := service.NewMerchantSrvc(merchantRepo)
@@ -49,7 +50,7 @@ func main() {
 	app := echo.New()
 
 	trxRoute := app.Group("/trx")
-	trxRoute.Use(middleware.Auth(merchantRepo))
+	// trxRoute.Use(middleware.Auth(merchantRepo))
 	trxRoute.Use(middleware.DBTransactionMiddlware(db))
 	trxRoute.POST("/collect/:merchantid", handlers.PointCollection(trxRepo))
 	trxRoute.POST("/transfer/:merchantid/:userid", handlers.TransferPoint(trxRepo))
@@ -73,9 +74,14 @@ func main() {
 	adminRoute.GET("/getWallet/:Walletid", handlers.GetWalletById(adminRepo))
 	// app.GET("/sms",handlers.Send(trxRepo))
 
-// call with api need separate route
 
 
+	app.GET("/generateNewToken/:merchantid", handlers.GenerateNewToken(apiRepo))
+	app.DELETE("/deltoken/:token", handlers.RemoveToken(apiRepo))
+	app.POST("/giveWalletWithApi", handlers.GiveWallet(apiRepo))
+	app.POST("/pointConfiguration/:merchantid", handlers.PointConfig(apiRepo))
+
+	// call with api need separate route
 
 	serverPort := os.Getenv("SERVER_PORT")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%s", serverPort)))

@@ -24,6 +24,9 @@ type Collection struct {
 type RequestData struct {
 	Amount float64 `json:"amount"`
 }
+type CardCode struct{
+	GiftCardCode 	string     `json:"cardCode"`
+}
 
 type GiftCard struct {
 	Model

@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/matoous/go-nanoid/v2"
+	gonanoid "github.com/matoous/go-nanoid/v2"
 
 	// "github.com/google/uuid"
 	"github.com/santimpay/customer-loyality/internal/entities"
@@ -20,10 +20,11 @@ type ApiRepo interface {
 	RemoveToken(token string) error
 	GiveWallet(phone string, username string, merchantId string) (*entities.User, error)
 	PointConfiguration(ratio float64, merchantid string) error
+	FindMerchantFromToken(token string) (string, error)
 	GivePoint(usersPhone string, amount float64, merchantId string) error
 	BuyGiftCard(merchantid string, amount float64, recipentPhone string, purchaserPhone string) error
-	FindGiftCardByCode( giftcardCode string)(*entities.GiftCard,error)
-	redeemGiftCard(merchantId string, giftcardCode string, totalPrice float64) (float64,error)
+	FindGiftCardByCode(giftcardCode string) (*entities.GiftCard, error)
+	redeemGiftCard(merchantId string, giftcardCode string, totalPrice float64) (float64, error)
 }
 
 type ApiRepoImpl struct {
@@ -57,13 +58,12 @@ func (repo *ApiRepoImpl) WithTrx(trxDb *gorm.DB) ApiRepo {
 	return repo
 }
 
-//token generation when they want to
-func (repo ApiRepoImpl) GenerateNewToken(merchantid string)(string,error){
+// token generation when they want to
+func (repo ApiRepoImpl) GenerateNewToken(merchantid string) (string, error) {
 
-	nanoid, err := gonanoid.New()
-	fmt.Print(nanoid)
+	nanoid, err := gonanoid.New(50)
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
 	tokenTable := &entities.TokenTable{
@@ -76,7 +76,7 @@ func (repo ApiRepoImpl) GenerateNewToken(merchantid string)(string,error){
 		return "", err
 	}
 
-	return nanoid,nil
+	return nanoid, nil
 }
 
 // func (repo ApiRepoImpl) GenerateNewToken(merchantid string) (string, error) {
@@ -135,8 +135,7 @@ func (repo ApiRepoImpl) RemoveToken(token string) error {
 	if err != nil {
 		return err
 	}
-
-	err = repo.Db.Delete(Token.ID).Error
+	err = repo.Db.Where("token=?", token).Unscoped().Delete(&Token).Error
 	if err != nil {
 		return err
 	}
@@ -150,25 +149,34 @@ func (repo ApiRepoImpl) RemoveToken(token string) error {
 
 func (repo ApiRepoImpl) GiveWallet(phone string, username string, merchantId string) (*entities.User, error) {
 	user, err := repo.UserRepo.FindUserByPhone(phone)
-
-	if err == nil {
-		User, err := repo.MerchantRepo.CreateUser(*user, merchantId)
+	if err != nil {
+		privateKey, publicKey, err := repo.MerchantRepo.GenerateKeyPair()
 		if err != nil {
 			return nil, err
 		}
-		return User, nil
-	} else {
-		err = repo.Db.Create(&user).Error
-		if err != nil {
-			return nil, err
+		user = &entities.User{
+			PhoneNumber: phone,
+			UserName:    username,
+			PrivateKey:  privateKey,
+			PublicKey:   publicKey,
 		}
-		_, _, err = repo.MerchantRepo.AddUserToMerchant(merchantId, user.ID)
-		if err != nil {
-			return nil, err
-		}
-		return user, nil
 	}
 
+	User, err := repo.MerchantRepo.CreateUser(*user, merchantId)
+	if err != nil {
+		return nil, err
+	}
+	return User, nil
+
+}
+
+func (repo ApiRepoImpl) FindMerchantFromToken(token string) (string, error) {
+	merchant := entities.TokenTable{}
+	err := repo.Db.Model(&entities.TokenTable{}).Where("token=?", token).First(&merchant).Error
+	if err != nil {
+		return "", err
+	}
+	return merchant.MerchantId, nil
 }
 
 //automate giving points
@@ -199,7 +207,7 @@ func (repo ApiRepoImpl) GivePoint(usersPhone string, amount float64, merchantId 
 	if err != nil {
 		return err
 	}
-	wallet.Balance += (amount * merchant.PointConfiguration)
+	wallet.Balance += amount
 	return nil
 }
 
@@ -216,14 +224,14 @@ func (repo ApiRepoImpl) PointConfiguration(ratio float64, merchantid string) err
 //buy gift card
 
 func (repo ApiRepoImpl) BuyGiftCard(merchantid string, amount float64, recipentPhone string, purchaserPhone string) error {
-var reciverId string
+	var reciverId string
 
-	purchaseWallet,err:= repo.TrxRepo.FindSingleWallet(purchaserPhone,merchantid)
-	if err!=nil{
+	purchaseWallet, err := repo.TrxRepo.FindSingleWallet(purchaserPhone, merchantid)
+	if err != nil {
 		return err
 	}
-	if purchaseWallet.Balance < amount{
-return errors.New("your balance is insufficient")
+	if purchaseWallet.Balance < amount {
+		return errors.New("your balance is insufficient")
 	}
 
 	nanoid, err := gonanoid.New()
@@ -232,24 +240,24 @@ return errors.New("your balance is insufficient")
 	if err != nil {
 		return err
 	}
-purchaseWallet.Balance-=amount
-recipent,err:= repo.UserRepo.FindUserByPhone(recipentPhone)
-if err!=nil{
-reciverId=""
-}else{
-	reciverId=recipent.ID
-}
+	purchaseWallet.Balance -= amount
+	recipent, err := repo.UserRepo.FindUserByPhone(recipentPhone)
+	if err != nil {
+		reciverId = ""
+	} else {
+		reciverId = recipent.ID
+	}
 
-err = repo.TrxRepo.PerformTransaction(amount,"debit",reciverId,purchaseWallet.ID,"buy gift card")
-if err!=nil{
-	return errors.New("failed to record transaction ")
-}
+	err = repo.TrxRepo.PerformTransaction(amount, "debit", reciverId, purchaseWallet.ID, "buy gift card")
+	if err != nil {
+		return errors.New("failed to record transaction ")
+	}
 	record := entities.GiftCard{
-		Amount:        amount,
-		RecipentPhone: recipentPhone,
-		MerchantId:    merchantid,
-		GiftCardCode:  nanoid,
-		PurchaserPhone:purchaserPhone,
+		Amount:         amount,
+		RecipentPhone:  recipentPhone,
+		MerchantId:     merchantid,
+		GiftCardCode:   nanoid,
+		PurchaserPhone: purchaserPhone,
 	}
 
 	err = repo.Db.Create(&record).Error
@@ -262,35 +270,35 @@ if err!=nil{
 // send gift card
 // in the handler
 
-//redeemGiftcard
-func (repo ApiRepoImpl) FindGiftCardByCode( giftcardCode string)(*entities.GiftCard,error){
+// redeemGiftcard
+func (repo ApiRepoImpl) FindGiftCardByCode(giftcardCode string) (*entities.GiftCard, error) {
 	giftCard := entities.GiftCard{}
-	err:= repo.Db.Model(&entities.GiftCard{}).Where("gift_card_code=?",giftcardCode).First(giftCard).Error
-	if err!=nil{
-		return nil,err
+	err := repo.Db.Model(&entities.GiftCard{}).Where("gift_card_code=?", giftcardCode).First(giftCard).Error
+	if err != nil {
+		return nil, err
 	}
 
-return &giftCard,nil
+	return &giftCard, nil
 }
 
-func (repo ApiRepoImpl) redeemGiftCard(merchantId string, giftcardCode string, totalPrice float64) (float64,error){
-	merchant,err := repo.MerchantRepo.FindMerchantById(merchantId)
-	if err!=nil{
-		return -1,err
+func (repo ApiRepoImpl) redeemGiftCard(merchantId string, giftcardCode string, totalPrice float64) (float64, error) {
+	merchant, err := repo.MerchantRepo.FindMerchantById(merchantId)
+	if err != nil {
+		return -1, err
 	}
-	giftCard,err:= repo.FindGiftCardByCode(giftcardCode)
-	if err!=nil{
-		return -1,err
+	giftCard, err := repo.FindGiftCardByCode(giftcardCode)
+	if err != nil {
+		return -1, err
 	}
 	giftCardAmount := giftCard.Amount * merchant.PointConfiguration
-	if totalPrice > giftCardAmount{
-		totalPrice-=giftCardAmount
-		giftCard.Amount=0
-		return totalPrice,nil
+	if totalPrice > giftCardAmount {
+		totalPrice -= giftCardAmount
+		giftCard.Amount = 0
+		return totalPrice, nil
 
-	}else{
-		giftCardAmount-=totalPrice
-		return 0,nil
+	} else {
+		giftCardAmount -= totalPrice
+		return 0, nil
 	}
 
 }
