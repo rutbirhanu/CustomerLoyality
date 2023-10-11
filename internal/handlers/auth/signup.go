@@ -5,8 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/santimpay/customer-loyality/internal/entities"
-	"github.com/santimpay/customer-loyality/internal/service"
 	"github.com/santimpay/customer-loyality/internal/repositories"
+	"github.com/santimpay/customer-loyality/internal/service"
 	"github.com/santimpay/customer-loyality/internal/util"
 )
 
@@ -23,31 +23,32 @@ func Signup(srvc service.MerchantService, repo repositories.MerchantRepo) echo.H
 
 		}
 		hashedPass := util.HashPassword(merchant.Password)
-		privateKey,publicKey, err := repo.GenerateKeyPair()
-		
+		privateKey, publicKey, err := repo.GenerateKeyPair()
+
 		if err != nil {
 			return err
 		}
 
-
 		merchantData := entities.Merchant{
-			MerchantName: merchant.MerchantName,
-			Password:     hashedPass,
-			PhoneNumber:  merchant.PhoneNumber,
-			BusinessName: merchant.BusinessName,
-			PrivateKey: privateKey,
-			PublicKey: publicKey,
+			MerchantName:       merchant.MerchantName,
+			Password:           hashedPass,
+			PhoneNumber:        merchant.PhoneNumber,
+			BusinessName:       merchant.BusinessName,
+			PointConfiguration: merchant.PointConfiguration,
+			PrivateKey:         privateKey,
+			PublicKey:          publicKey,
 		}
 		data, stored := srvc.CreateMerchant(merchantData)
 		if !stored {
 			return c.JSON(http.StatusBadRequest, err)
 		}
-		
-		response:= entities.CreatedMerchantResponse{
-			MerchantName: data.MerchantName,
-			Password:     hashedPass,
-			PhoneNumber:  data.PhoneNumber,
-			BusinessName: data.BusinessName,
+
+		response := entities.CreatedMerchantResponse{
+			MerchantName:       data.MerchantName,
+			Password:           hashedPass,
+			PhoneNumber:        data.PhoneNumber,
+			BusinessName:       data.BusinessName,
+			PointConfiguration: data.PointConfiguration,
 		}
 		c.JSON(http.StatusAccepted, response)
 		return nil

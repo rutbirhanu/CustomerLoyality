@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
+
 	// "crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -23,6 +25,7 @@ type MerchantRepo interface {
 	RetrivePrivateKey(string) (string, error)
 	UpdateMerchant(entities.Merchant) error
 	GetAllMerchants() (*[]entities.Merchant, error)
+	TotalNumberOfUsers(merchantId string) (int64, error)
 	AddUserToMerchant(merchantId string, userId string) (*entities.Merchant, *entities.User, error)
 	CreateUser(entities.User, string) (*entities.User, error)
 	FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error)
@@ -80,7 +83,7 @@ func (db *MerchantRepoImpl) AddUserToMerchant(merchantId string, userId string) 
 
 func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*entities.User, error) {
 	User, err := db.UserRepo.FindUserByPhone(user.PhoneNumber)
-	
+
 	if err == nil {
 		_, _, err := db.AddUserToMerchant(merchantId, User.ID)
 		if err != nil {
@@ -125,7 +128,8 @@ func (db *MerchantRepoImpl) CreateUser(user entities.User, merchantId string) (*
 // }
 
 func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entities.Merchant, error) {
-
+valid:=merchant.ValidatePhoneNumber()
+if (valid){
 	err := db.Db.Create(&merchant).Error
 	if err != nil {
 		return nil, err
@@ -136,9 +140,12 @@ func (db *MerchantRepoImpl) CreateMerchant(merchant entities.Merchant) (*entitie
 	}
 
 	return storedMerchant, nil
-
 }
 
+return nil,errors.New("invalid phone number")
+
+
+}
 
 func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -168,8 +175,6 @@ func (db *MerchantRepoImpl) GenerateKeyPair() (string, string, error) {
 
 	return string(privateKeyPEM), string(publicKeyPEM), nil
 }
-
-
 
 func (db *MerchantRepoImpl) GetAllMerchants() (*[]entities.Merchant, error) {
 	allMerchats := []entities.Merchant{}
@@ -217,6 +222,23 @@ func (db MerchantRepoImpl) RetrivePrivateKey(phone string) (string, error) {
 	}
 	privateKey := merchant.PrivateKey
 	return privateKey, nil
+}
+
+func (db MerchantRepoImpl) TotalNumberOfUsers(merchantId string) (int64, error) {
+	// var totalUsers int64
+	// merchant, err := db.FindMerchantById(merchantId)
+	// if err != nil {
+	// 	return -1, err
+	// }
+	// if err := db.Db.Model(&entities.User{}).Where("id IN (?)", merchant.Users).Count(&totalUsers).Error; err != nil {
+	// 	return -1, err
+	// }
+
+	var count int64
+	if err := db.Db.Table("wallets").Where("merchant_id = ?", merchantId).Count(&count).Error; err != nil {
+		return -1, err
+	}
+	return count, nil
 }
 
 func (db *MerchantRepoImpl) FindAllUsers(from string, to string, all bool, page int64, perpage int64) (*entities.GetAllUsers, error) {

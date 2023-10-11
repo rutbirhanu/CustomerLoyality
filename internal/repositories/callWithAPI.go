@@ -218,6 +218,8 @@ func (repo ApiRepoImpl) PointConfiguration(ratio float64, merchantid string) err
 		return err
 	}
 	merchant.PointConfiguration = ratio
+	repo.Db.Save(&merchant)
+
 	return nil
 }
 

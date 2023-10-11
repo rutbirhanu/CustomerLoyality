@@ -23,29 +23,31 @@ func GetAll(srvc service.MerchantService) echo.HandlerFunc {
 
 func RegisterUser(repo repositories.MerchantRepo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		merchantID:=c.Param("merchantid")
+		merchantID := c.Param("merchantid")
 		user := entities.User{}
 		err := c.Bind(&user)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, "can not parse data")
 		}
-// check if the user is in the user table before generating the keys
+		// check if the user is in the user table before generating the keys
 
 		privateKey, publicKey, err := repo.GenerateKeyPair()
 
 		if err != nil {
 			return err
 		}
+		// check:= user.ValidatePhoneNumber()
 		userData := entities.User{
 			PhoneNumber: user.PhoneNumber,
 			UserName:    user.UserName,
 			PrivateKey:  privateKey,
 			PublicKey:   publicKey,
 		}
-		
-		User, err := repo.CreateUser(userData,merchantID)
+
+		User, err := repo.CreateUser(userData, merchantID)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, err)
+			errorResponse := map[string]string{"error": err.Error()}
+			return c.JSON(http.StatusBadRequest, errorResponse)
 		}
 
 		c.JSON(http.StatusCreated, User)
@@ -64,5 +66,16 @@ func FindMerchantById(srvc service.MerchantService) echo.HandlerFunc {
 		}
 		c.JSON(http.StatusAccepted, data)
 		return nil
+	}
+}
+
+func NumberOfUsers(repo repositories.MerchantRepo) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		merchantId := c.Param("merchantid")
+		usersNumber, err := repo.TotalNumberOfUsers(merchantId)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		return c.JSON(http.StatusAccepted, usersNumber)
 	}
 }

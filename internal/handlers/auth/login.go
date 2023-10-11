@@ -26,6 +26,7 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 			return c.JSON(http.StatusConflict, "incorrect password")
 		}
 		private, err := repo.RetrivePrivateKey(data.PhoneNumber)
+		
 		if err != nil {
 			c.JSON(http.StatusBadGateway, err)
 		}
@@ -34,7 +35,7 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		if err != nil {
 			return c.JSON(http.StatusConflict, "can not create token")
 		}
-		
+
 		user.Token = token
 		data.Token = token
 
@@ -46,10 +47,10 @@ func Login(srv service.MerchantService, repo repositories.MerchantRepo) echo.Han
 		cookie.HttpOnly = true
 		c.SetCookie(cookie)
 		hashedPass := util.HashPassword(user.Password)
-		userResponse:= entities.MerchantLogin{
-			Password:     hashedPass,
-			PhoneNumber:  user.PhoneNumber,
-			Token: token,
+		userResponse := entities.MerchantLogin{
+			Password:    hashedPass,
+			PhoneNumber: user.PhoneNumber,
+			Token:       token,
 		}
 		c.JSON(http.StatusAccepted, userResponse)
 		return nil

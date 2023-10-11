@@ -50,7 +50,7 @@ func main() {
 	app := echo.New()
 
 	trxRoute := app.Group("/trx")
-	// trxRoute.Use(middleware.Auth(merchantRepo))
+	trxRoute.Use(middleware.Auth(merchantRepo))
 	trxRoute.Use(middleware.DBTransactionMiddlware(db))
 	trxRoute.POST("/collect/:merchantid", handlers.PointCollection(trxRepo))
 	trxRoute.POST("/transfer/:merchantid/:userid", handlers.TransferPoint(trxRepo))
@@ -80,6 +80,8 @@ func main() {
 	app.DELETE("/deltoken/:token", handlers.RemoveToken(apiRepo))
 	app.POST("/giveWalletWithApi", handlers.GiveWallet(apiRepo))
 	app.POST("/pointConfiguration/:merchantid", handlers.PointConfig(apiRepo))
+	app.POST("/buyGigtCard",handlers.BuyGiftCard(apiRepo))
+	app.GET("/userNumber/:merchantid",handlers.NumberOfUsers(merchantRepo))
 
 	// call with api need separate route
 
