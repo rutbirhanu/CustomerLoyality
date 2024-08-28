@@ -16,6 +16,6 @@ Before you begin, ensure you have met the following requirements:
 
 ## Technologies Used
 -   <img src="https://img.icons8.com/color/48/000000/golang.png" alt="Go" width="25" height="25"/>  Go (Golang): The primary programming language used for developing the backend.
--  Echo Framework: A high-performance, extensible, minimalist Go web framework.
--  GORM: The ORM (Object-Relational Mapping) library used for database operations. 
+- <img src="https://img.stackshare.io/service/4996/9P0MlumU_400x400.jpg" alt="Go" width="25" height="25"/> Echo Framework: A high-performance, extensible, minimalist Go web framework.
+-  <img src="https://miro.medium.com/v2/resize:fit:1400/1*XBvxUxqycRC8B8KGCuzJVw.png" alt="Go" width="44" height="17"/>  GORM: The ORM (Object-Relational Mapping) library used for database operations. 
 -  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTJ-WpEqIVx801fSpCMwVOCfgT6a1o1ng6Ryg&s" alt="PostgreSQL" width="25" height="25"/>  PostgreSQL: The database management system used for storing user data and transactions. 
