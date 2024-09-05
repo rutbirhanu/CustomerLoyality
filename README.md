@@ -1,9 +1,8 @@
 # CustomerLoyality
 
-Customer Loyalty is a backend system built with Go (Golang) and the Echo framework, designed to reward customers with points for their frequent use of an app. These points can be converted into mobile cards or transferred to other users. The system ensures an engaging experience for users by encouraging continued usage through a points-based reward system.
+Customer Loyalty is a system built with Go (Golang) and the Echo framework, designed to reward customers with points for their frequent use of an app. These points can be converted into mobile cards or transferred to other users. The system ensures an engaging experience for users by encouraging continued usage through a points-based reward system.
 
 ## Prerequisites
-Before you begin, ensure you have met the following requirements:
 - Go (Golang) installed on your machine.
 - PostgreSQL database set up and running.
 
